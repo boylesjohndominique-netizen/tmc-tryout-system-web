@@ -1,0 +1,91 @@
+@model SportDetailsViewModel
+@{
+    ViewData["Title"] = Model.Sport.Name;
+    bool isAdmin = User.IsInRole(Roles.Admin);
+    bool canSchedule = isAdmin || User.IsInRole(Roles.Coach);
+}
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Sports</a> / @Model.Sport.Name</div>
+        <div class="profile-head">
+            <div class="icon-tile gold"><i class="bi bi-@Model.Sport.Icon"></i></div>
+            <div>
+                <h1>@Model.Sport.Name</h1>
+                @if (Model.Sport.IsActive) { <span class="badge-soft badge-soft-success">Open for registration</span> }
+                else { <span class="badge-soft badge-soft-muted">Inactive</span> }
+            </div>
+        </div>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Applicants" asp-action="Index" asp-route-sportId="@Model.Sport.Id" class="btn btn-light-x"><i class="bi bi-people me-1"></i>Applicants</a>
+        @if (canSchedule)
+        {
+            <a asp-controller="Schedules" asp-action="Create" asp-route-sportId="@Model.Sport.Id" class="btn btn-light-x"><i class="bi bi-calendar-plus me-1"></i>Add schedule</a>
+        }
+        @if (isAdmin)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Sport.Id" class="btn btn-gold"><i class="bi bi-pencil me-1"></i>Edit sport</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-3"><div class="card-x stat-card"><div class="stat-icon"><i class="bi bi-people"></i></div><div><div class="stat-value">@Model.ApplicantCount</div><div class="stat-label">Applicants</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card-x stat-card"><div class="stat-icon green"><i class="bi bi-patch-check"></i></div><div><div class="stat-value">@Model.SelectedCount@(Model.Sport.Slots.HasValue ? " / " + Model.Sport.Slots : "")</div><div class="stat-label">Selected</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card-x stat-card"><div class="stat-icon gold"><i class="bi bi-bullseye"></i></div><div><div class="stat-value">@Model.Sport.QualifyingScore</div><div class="stat-label">Qualifying score</div></div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card-x stat-card"><div class="stat-icon"><i class="bi bi-calendar-event"></i></div><div><div class="stat-value">@Model.Schedules.Count</div><div class="stat-label">Tryout schedules</div></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card-x mb-3">
+            <div class="card-x-head"><h2><i class="bi bi-info-circle"></i>About</h2></div>
+            <div class="card-x-body">@(string.IsNullOrWhiteSpace(Model.Sport.Description) ? "No description yet." : Model.Sport.Description)</div>
+        </div>
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>Coaches and evaluators</h2></div>
+            <div class="card-x-body">
+                @if (Model.Staff.Count == 0)
+                {
+                    <span class="text-muted">Nobody is assigned yet.</span>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var u in Model.Staff)
+                        {
+                            <div class="person">
+                                <span class="avatar avatar-sm">@char.ToUpperInvariant(u.FullName[0])</span>
+                                <span><strong>@u.FullName</strong><small>@u.Role</small></span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-calendar-event"></i>Tryout schedules</h2></div>
+            @if (Model.Schedules.Count == 0)
+            {
+                <div class="empty-state"><h3>No schedules yet</h3><p>Add a tryout date for this sport.</p></div>
+            }
+            else
+            {
+                foreach (var t in Model.Schedules)
+                {
+                    <div class="schedule-item">
+                        <div class="date-tile @(t.Status == ScheduleStatus.Completed ? "past" : "")"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                        <div class="grow">
+                            <strong>@t.Title</strong>
+                            <small>@t.StartAt.ToString("h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; @t.Venue</small>
+                        </div>
+                        <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

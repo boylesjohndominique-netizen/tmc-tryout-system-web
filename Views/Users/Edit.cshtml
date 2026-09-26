@@ -1,0 +1,21 @@
+@model UserFormViewModel
+@{ ViewData["Title"] = "Edit account"; }
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">User accounts</a> / Edit account</div>
+        <h1>Edit @Model.FullName</h1>
+    </div>
+    <div class="page-actions">
+        <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-light-x"><i class="bi bi-key me-1"></i>Reset password</a>
+    </div>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card-x" data-once>
+    <input type="hidden" asp-for="Id" />
+    <partial name="_UserForm" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save changes</button>
+        <a asp-action="Index" class="btn btn-light-x">Cancel</a>
+    </div>
+</form>

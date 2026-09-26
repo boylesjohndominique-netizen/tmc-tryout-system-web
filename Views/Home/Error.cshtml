@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Something went wrong";
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_AuthLayout";
+}
+<div class="error-wrap">
+    <div class="error-code">5<span>0</span>0</div>
+    <h1 class="h4 fw-bold mt-3">Something went wrong on our side</h1>
+    <p class="text-muted">The page could not be loaded. Try again, and if it keeps happening, let the athletics office know.</p>
+    @if (ViewBag.RequestId != null)
+    {
+        <p class="small text-muted">Reference: <code>@ViewBag.RequestId</code></p>
+    }
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary"><i class="bi bi-house me-1"></i>Back to dashboard</a>
+</div>

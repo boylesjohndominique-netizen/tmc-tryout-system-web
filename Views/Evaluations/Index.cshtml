@@ -1,0 +1,59 @@
+@model EvaluationListViewModel
+@{ ViewData["Title"] = "Evaluations"; }
+
+<div class="page-head">
+    <div>
+        <h1>Athlete evaluation</h1>
+        <p>Score each applicant on the tryout criteria.</p>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-3 mb-3 align-items-center justify-content-between">
+    <div class="tabs-x">
+        <a asp-action="Index" asp-route-sportId="@Model.SportId" class="@(string.IsNullOrEmpty(Model.Show) ? "active" : "")"><i class="bi bi-list-ul"></i>All</a>
+        <a asp-action="Index" asp-route-show="todo" asp-route-sportId="@Model.SportId" class="@(Model.Show == "todo" ? "active" : "")"><i class="bi bi-hourglass-split"></i>Not yet by me</a>
+        <a asp-action="Index" asp-route-show="done" asp-route-sportId="@Model.SportId" class="@(Model.Show == "done" ? "active" : "")"><i class="bi bi-check-circle"></i>Evaluated by me</a>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="show" value="@Model.Show" />
+        <input name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Search name or ID" style="width:200px" />
+        <select name="sportId" class="form-select form-select-sm" style="min-width:160px">
+            <option value="">All sports</option>
+            @foreach (var s in Model.Sports) { <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option> }
+        </select>
+        <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-funnel"></i></button>
+    </form>
+</div>
+
+<div class="card-x">
+    @if (Model.Applicants.Count == 0)
+    {
+        <div class="empty-state"><div class="icon-tile"><i class="bi bi-clipboard2-pulse"></i></div><h3>Nothing to show</h3><p>No applicants match this view.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr><th>Applicant</th><th>Sport</th><th>Schedule</th><th>Evaluators</th><th>Overall</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Applicants)
+                {
+                    bool mine = Model.EvaluatedByMe.Contains(a.Id);
+                    <tr>
+                        <td><div class="person"><span class="avatar avatar-sm">@a.Initials</span><span><strong>@a.DisplayName</strong><small>@a.StudentId</small></span></div></td>
+                        <td><i class="bi bi-@(a.Sport?.Icon ?? "trophy") text-primary me-1"></i>@a.Sport?.Name</td>
+                        <td>@(a.Schedule?.Title ?? "Not assigned")</td>
+                        <td>@a.EvaluationCount</td>
+                        <td>@(a.OverallScore.HasValue ? a.OverallScore.Value.ToString("0.0") : "-")</td>
+                        <td>
+                            <a asp-action="Evaluate" asp-route-id="@a.Id" class="btn btn-sm @(mine ? "btn-light-x" : "btn-gold")">
+                                <i class="bi bi-@(mine ? "pencil" : "clipboard2-pulse") me-1"></i>@(mine ? "Edit my score" : "Evaluate")
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

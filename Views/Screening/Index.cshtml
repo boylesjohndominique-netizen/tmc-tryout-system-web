@@ -1,0 +1,85 @@
+@model ScreeningViewModel
+@{ ViewData["Title"] = "Screening and ranking"; }
+
+<div class="page-head">
+    <div>
+        <h1>Screening and ranking</h1>
+        <p>Applicants ranked by overall score within their sport.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-4"><div class="card-x stat-card"><div class="stat-icon green"><i class="bi bi-patch-check"></i></div><div><div class="stat-value">@Model.QualifiedCount</div><div class="stat-label">Meet the qualifying score</div></div></div></div>
+    <div class="col-sm-4"><div class="card-x stat-card"><div class="stat-icon gold"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-value">@Model.NotEvaluated</div><div class="stat-label">Not yet evaluated</div></div></div></div>
+    <div class="col-sm-4"><div class="card-x stat-card"><div class="stat-icon"><i class="bi bi-list-ol"></i></div><div><div class="stat-value">@Model.Rows.Count</div><div class="stat-label">Ranked applicants shown</div></div></div></div>
+</div>
+
+<form method="get" class="card-x filter-bar mb-3">
+    <div class="field grow">
+        <label>Search</label>
+        <div class="search-box"><i class="bi bi-search"></i><input name="search" value="@Model.Search" class="form-control" placeholder="Name or student ID" /></div>
+    </div>
+    <div class="field">
+        <label>Sport</label>
+        <select name="sportId" class="form-select">
+            <option value="">All sports</option>
+            @foreach (var s in Model.Sports) { <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option> }
+        </select>
+    </div>
+    <div class="field">
+        <label>Result</label>
+        <select name="filter" class="form-select">
+            <option value="">All results</option>
+            <option value="qualified" selected="@(Model.Filter == "qualified")">Qualified</option>
+            <option value="notqualified" selected="@(Model.Filter == "notqualified")">Below requirement</option>
+        </select>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a asp-action="Index" class="btn btn-light-x">Reset</a>
+    </div>
+</form>
+
+<div class="card-x">
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="empty-state"><div class="icon-tile"><i class="bi bi-bar-chart-steps"></i></div><h3>No evaluated applicants yet</h3><p>Scores will appear here once evaluations are recorded.</p></div>
+    }
+    else
+    {
+        <form asp-action="Compare" method="get" id="compareForm">
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr><th></th><th>Rank</th><th>Applicant</th><th>Sport</th><th>Skill</th><th>Speed</th><th>Agility</th><th>Endurance</th><th>Teamwork</th><th>Discipline</th><th>Overall</th><th>Score</th><th>Result</th></tr></thead>
+                <tbody>
+                @{ string currentSport = ""; }
+                @foreach (var r in Model.Rows)
+                {
+                    if (r.Applicant.Sport?.Name != currentSport)
+                    {
+                        currentSport = r.Applicant.Sport?.Name ?? "";
+                        <tr class="table-light"><td colspan="13" class="fw-bold small text-uppercase text-muted"><i class="bi bi-@(r.Applicant.Sport?.Icon ?? "trophy") me-1"></i>@currentSport</td></tr>
+                    }
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input" name="ids" value="@r.Applicant.Id" /></td>
+                        <td><span class="rank-badge @(r.Rank == 1 ? "rank-1" : r.Rank == 2 ? "rank-2" : r.Rank == 3 ? "rank-3" : "")">@r.Rank</span></td>
+                        <td><a asp-controller="Applicants" asp-action="Details" asp-route-id="@r.Applicant.Id" class="person text-reset"><span class="avatar avatar-sm">@r.Applicant.Initials</span><span><strong>@r.Applicant.DisplayName</strong><small>@r.Applicant.StudentId</small></span></a></td>
+                        <td>@r.Applicant.Sport?.Name</td>
+                        <td>@r.Skill</td><td>@r.Speed</td><td>@r.Agility</td><td>@r.Endurance</td><td>@r.Teamwork</td><td>@r.Discipline</td><td>@r.OverallPerformance</td>
+                        <td><span class="score-pill @UiHelpers.ScoreClass(r.Overall, r.Required)">@r.Overall.ToString("0.0")</span></td>
+                        <td>
+                            @if (r.Qualified) { <span class="badge-soft badge-soft-success"><i class="bi bi-check-circle-fill"></i>Qualified</span> }
+                            else { <span class="badge-soft badge-soft-muted">Below @r.Required</span> }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="result-note d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span>Select 2 to 4 applicants to compare them side by side. Selected: <strong id="compareCount">0</strong></span>
+            <button type="submit" id="compareBtn" class="btn btn-sm btn-gold" disabled><i class="bi bi-columns-gap me-1"></i>Compare selected</button>
+        </div>
+        </form>
+    }
+</div>

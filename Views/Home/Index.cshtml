@@ -1,0 +1,160 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var fullName = User.FindFirst("FullName")?.Value ?? "";
+    var first = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+    var max = Math.Max(1, Model.PerSport.Count == 0 ? 1 : Model.PerSport.Max(p => p.Count));
+    bool isAdmin = User.IsInRole(Roles.Admin);
+    bool canDecide = isAdmin || User.IsInRole(Roles.Coach);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Hello, @first</h1>
+        <p>Here is where the tryouts stand today.</p>
+    </div>
+    <div class="page-actions">
+        @if (isAdmin)
+        {
+            <a asp-controller="Applicants" asp-action="Create" class="btn btn-light-x"><i class="bi bi-person-plus me-1"></i>Register applicant</a>
+            <a asp-controller="Schedules" asp-action="Create" class="btn btn-gold"><i class="bi bi-calendar-plus me-1"></i>New schedule</a>
+        }
+        else
+        {
+            <a asp-controller="Evaluations" asp-action="Index" class="btn btn-gold"><i class="bi bi-clipboard2-pulse me-1"></i>Evaluate applicants</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-x stat-card">
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
+            <div><div class="stat-value">@Model.TotalApplicants</div><div class="stat-label">Registered applicants</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-x stat-card">
+            <div class="stat-icon gold"><i class="bi bi-calendar-event"></i></div>
+            <div><div class="stat-value">@Model.UpcomingTryouts</div><div class="stat-label">Upcoming tryouts</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-x stat-card">
+            <div class="stat-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+            <div><div class="stat-value">@Model.AwaitingEvaluation</div><div class="stat-label">Awaiting evaluation</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card-x stat-card">
+            <div class="stat-icon green"><i class="bi bi-patch-check"></i></div>
+            <div><div class="stat-value">@Model.Selected</div><div class="stat-label">Selected athletes</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="card-x mb-3">
+            <div class="card-x-head">
+                <h2><i class="bi bi-bar-chart-line"></i>Applicants per sport</h2>
+                <span class="text-muted small">@Model.Qualified qualified so far</span>
+            </div>
+            <div class="card-x-body">
+                @if (Model.PerSport.Count == 0)
+                {
+                    <div class="empty-state py-4"><p class="mb-0">No sports yet.</p></div>
+                }
+                else
+                {
+                    foreach (var p in Model.PerSport)
+                    {
+                        <div class="bar-row">
+                            <div class="name"><i class="bi bi-@p.Icon"></i>@p.Name</div>
+                            <div class="bar-track"><div class="bar-fill" style="width:@((p.Count * 100 / max).ToString())%"></div></div>
+                            <div class="num">@p.Count</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head">
+                <h2><i class="bi bi-person-lines-fill"></i>Newest registrations</h2>
+                <a asp-controller="Applicants" asp-action="Index" class="btn btn-sm btn-light-x">View all</a>
+            </div>
+            @if (Model.Recent.Count == 0)
+            {
+                <div class="empty-state"><h3>No applicants yet</h3><p>Registrations will show up here as students sign up.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive-x">
+                    <table class="table table-x">
+                        <thead><tr><th>Applicant</th><th>Sport</th><th>Registered</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach (var a in Model.Recent)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-controller="Applicants" asp-action="Details" asp-route-id="@a.Id" class="person">
+                                        <span class="avatar avatar-sm">@a.Initials</span>
+                                        <span><strong>@a.DisplayName</strong><small>@a.StudentId</small></span>
+                                    </a>
+                                </td>
+                                <td>@a.Sport?.Name</td>
+                                <td>@a.RegisteredAt.ToString("MMM d, yyyy")</td>
+                                <td><partial name="_StatusBadge" model="a.Status" /></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card-x mb-3">
+            <div class="card-x-head">
+                <h2><i class="bi bi-calendar-event"></i>Upcoming tryouts</h2>
+                <a asp-controller="Schedules" asp-action="Index" class="btn btn-sm btn-light-x">All schedules</a>
+            </div>
+            @if (Model.Upcoming.Count == 0)
+            {
+                <div class="empty-state"><h3>Nothing scheduled</h3><p>Create a tryout schedule so students can pick a date.</p></div>
+            }
+            else
+            {
+                foreach (var t in Model.Upcoming)
+                {
+                    <a class="schedule-item text-reset" asp-controller="Schedules" asp-action="Details" asp-route-id="@t.Id">
+                        <div class="date-tile"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                        <div class="grow">
+                            <strong>@t.Title</strong>
+                            <small>@t.StartAt.ToString("h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; @t.Venue</small>
+                        </div>
+                        <span class="badge-soft badge-soft-info"><i class="bi bi-people"></i>@(Model.RegisteredCounts.TryGetValue(t.Id, out var c) ? c : 0)</span>
+                    </a>
+                }
+            }
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-lightning-charge"></i>Quick links</h2></div>
+            <div class="card-x-body d-grid gap-2">
+                <a asp-controller="Screening" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-bar-chart-steps me-2 text-primary"></i>Screening and ranking</a>
+                @if (canDecide)
+                {
+                    <a asp-controller="Selection" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-patch-check me-2 text-primary"></i>Record final selections</a>
+                }
+                <a asp-controller="Reports" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Generate reports</a>
+                @if (isAdmin)
+                {
+                    <a asp-controller="Users" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-person-gear me-2 text-primary"></i>Manage @Model.UserCount user accounts</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>

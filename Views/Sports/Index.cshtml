@@ -1,0 +1,77 @@
+@model SportListViewModel
+@{
+    ViewData["Title"] = "Sports";
+    bool isAdmin = User.IsInRole(Roles.Admin);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Sports</h1>
+        <p>@(isAdmin ? "Add sports, set qualifying scores and assign coaches or evaluators." : "The sports you are assigned to.")</p>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="page-actions"><a asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Add sport</a></div>
+    }
+</div>
+
+@if (Model.Sports.Count == 0)
+{
+    <div class="card-x">
+        <div class="empty-state">
+            <div class="icon-tile gold"><i class="bi bi-trophy"></i></div>
+            <h3>@(isAdmin ? "No sports yet" : "No sports assigned to you")</h3>
+            <p>@(isAdmin ? "Add the first sport so students can register for it." : "Ask an administrator to assign you to a sport.")</p>
+            @if (isAdmin) { <a asp-action="Create" class="btn btn-gold">Add a sport</a> }
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var s in Model.Sports)
+        {
+            var applicants = Model.ApplicantCounts.TryGetValue(s.Id, out var ac) ? ac : 0;
+            var schedules = Model.ScheduleCounts.TryGetValue(s.Id, out var sc) ? sc : 0;
+            <div class="col-md-6 col-xl-4">
+                <div class="card-x sport-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-tile gold"><i class="bi bi-@s.Icon"></i></div>
+                        <div class="flex-grow-1">
+                            <h3>@s.Name</h3>
+                            @if (s.IsActive) { <span class="badge-soft badge-soft-success">Open for registration</span> }
+                            else { <span class="badge-soft badge-soft-muted">Inactive</span> }
+                        </div>
+                        @if (isAdmin)
+                        {
+                            <div class="actions">
+                                <a asp-action="Edit" asp-route-id="@s.Id" class="btn-action" title="Edit"><i class="bi bi-pencil"></i></a>
+                                <form asp-action="Delete" asp-route-id="@s.Id" method="post" data-confirm="Remove @s.Name? This also deletes its schedules.">
+                                    <button type="submit" class="btn-action danger" title="Remove"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                    <p>@(string.IsNullOrWhiteSpace(s.Description) ? "No description yet." : s.Description)</p>
+                    <div class="sport-meta">
+                        <div><strong>@applicants</strong><small>Applicants</small></div>
+                        <div><strong>@schedules</strong><small>Schedules</small></div>
+                        <div><strong>@s.QualifyingScore</strong><small>Qualifying score</small></div>
+                        <div><strong>@(s.Slots.HasValue ? s.Slots.Value.ToString() : "-")</strong><small>Roster slots</small></div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (s.Staff.Count == 0)
+                        {
+                            <span class="text-muted small">No coach or evaluator assigned</span>
+                        }
+                        @foreach (var st in s.Staff.Where(x => x.User != null).Select(x => x.User!).OrderBy(u => u.FullName))
+                        {
+                            <span class="staff-chip"><span class="avatar">@(char.ToUpperInvariant(st.FullName[0]))</span>@st.FullName</span>
+                        }
+                    </div>
+                    <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-light-x btn-sm mt-auto align-self-start">View details</a>
+                </div>
+            </div>
+        }
+    </div>
+}

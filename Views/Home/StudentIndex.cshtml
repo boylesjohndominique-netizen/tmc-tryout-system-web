@@ -1,0 +1,105 @@
+@model StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var fullName = User.FindFirst("FullName")?.Value ?? "";
+    var firstName = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+    var entries = Model.TryoutEntries;
+    bool registered = entries.Count > 0;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Hello, @firstName</h1>
+        <p>Follow every tryout you joined from sign-up to the final result.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Explore" asp-action="Index" class="btn btn-light-x"><i class="bi bi-compass me-1"></i>Browse sports</a>
+        @if (!registered || entries.Count < 5)
+        {
+            <a asp-controller="Registration" asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Register for a sport</a>
+        }
+    </div>
+</div>
+
+@if (!registered)
+{
+    <div class="card-x">
+        <div class="empty-state">
+            <div class="icon-tile gold">
+                <i class="bi bi-trophy"></i>
+            </div>
+            <h3>You have not registered yet</h3>
+            <p>Fill in your student details and pick every sport you want to try out for. It takes about two minutes.</p>
+            <a asp-controller="Registration" asp-action="Create" class="btn btn-gold"><i class="bi bi-pencil-square me-1"></i>Start registration</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var a in entries)
+        {
+            var schedules = Model.SchedulesPerEntry.TryGetValue(a.Id, out var s) ? s : new List<TryoutSchedule>();
+            var next = schedules.FirstOrDefault();
+            bool tryoutDone = a.Schedule != null && a.Schedule.Status == ScheduleStatus.Completed;
+            bool evaluated = a.EvaluationCount > 0;
+            bool decided = a.Status != SelectionStatus.Pending;
+            <div class="col-lg-6">
+                <div class="card-x h-100">
+                    <div class="card-x-head">
+                        <h2><i class="bi bi-@(a.Sport?.Icon ?? "trophy")"></i>@a.Sport?.Name</h2>
+                        <partial name="_StatusBadge" model="a.Status" />
+                    </div>
+                    <div class="card-x-body">
+                        <div class="progress-steps">
+                            <div class="step done"><span class="dot"><i class="bi bi-check-lg"></i></span>Registered</div>
+                            <div class="step @(tryoutDone ? "done" : "current")"><span class="dot"><i class="bi @(tryoutDone ? "bi-check-lg" : "bi-calendar-event")"></i></span>Tryout</div>
+                            <div class="step @(evaluated ? "done" : (tryoutDone ? "current" : ""))"><span class="dot"><i class="bi @(evaluated ? "bi-check-lg" : "bi-clipboard2-pulse")"></i></span>Evaluation</div>
+                            <div class="step @(decided ? "done" : (evaluated ? "current" : ""))"><span class="dot"><i class="bi @(decided ? "bi-check-lg" : "bi-flag")"></i></span>Result</div>
+                        </div>
+
+                        <partial name="_ResultPanel" model="a" />
+
+                        @if (next != null)
+                        {
+                            <div class="schedule-item mt-3">
+                                <div class="date-tile"><span>@next.StartAt.ToString("MMM").ToUpper()</span><b>@next.StartAt.Day</b></div>
+                                <div class="grow">
+                                    <strong>@next.Title</strong>
+                                    <small>@next.StartAt.ToString("dddd, h:mm tt") - @next.EndAt.ToString("h:mm tt")<br />@next.Venue</small>
+                                </div>
+                                @if (a.TryoutScheduleId == next.Id)
+                                {
+                                    <span class="badge-soft badge-soft-success"><i class="bi bi-check-circle-fill"></i>Yours</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="card-x-foot d-flex gap-2">
+                        <a asp-controller="Registration" asp-action="Index" class="btn btn-sm btn-light-x">Open details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card-x mt-3">
+        <div class="card-x-head"><h2><i class="bi bi-person-vcard"></i>Your student profile</h2></div>
+        <div class="card-x-body d-flex flex-wrap gap-3 align-items-center">
+            <div>
+                <div><strong>@(entries[0].DisplayName)</strong></div>
+                <div class="text-muted small">@entries[0].StudentId &middot; @entries[0].CourseOrGrade &middot; @entries[0].YearLevel</div>
+                <div class="mt-1">
+                    @if (entries[0].IdVerified)
+                    {
+                        <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>ID verified</span>
+                    }
+                    else
+                    {
+                        <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>ID check pending</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

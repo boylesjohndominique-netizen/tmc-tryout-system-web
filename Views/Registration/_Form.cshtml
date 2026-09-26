@@ -1,0 +1,170 @@
+@model ApplicantFormViewModel
+<div class="form-section">
+    <h3><i class="bi bi-person-vcard"></i>Student information</h3>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="StudentId" class="form-label"></label>
+            <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" />
+            <div class="form-text">@UiHelpers.StudentIdHint</div>
+            <span asp-validation-for="StudentId" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Gender" class="form-label"></label>
+            <select asp-for="Gender" class="form-select">
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="BirthDate" class="form-label"></label>
+            <input asp-for="BirthDate" type="date" class="form-control" />
+            <span asp-validation-for="BirthDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FirstName" class="form-label"></label>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="MiddleName" class="form-label"></label>
+            <input asp-for="MiddleName" class="form-control" />
+            <span asp-validation-for="MiddleName" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="LastName" class="form-label"></label>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="CourseOrGrade" class="form-label">Course</label>
+            <select asp-for="CourseOrGrade" class="form-select">
+                <option value="">Select your course</option>
+                @foreach (var c in UiHelpers.Courses) { <option value="@c">@c</option> }
+            </select>
+            <div class="form-text">Trinidad Municipal College offers BSIT, BSOA, BSED, BSPolSci and BSCrim.</div>
+            <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="YearLevel" class="form-label"></label>
+            <select asp-for="YearLevel" class="form-select">
+                <option value="">Select</option>
+                @foreach (var y in UiHelpers.YearLevels) { <option value="@y">@y</option> }
+            </select>
+            <div class="form-text">TMC tryouts are open to college students from 1st to 4th year.</div>
+            <span asp-validation-for="YearLevel" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="ContactNumber" class="form-label"></label>
+            <input asp-for="ContactNumber" class="form-control" placeholder="09xx-xxx-xxxx" />
+            <span asp-validation-for="ContactNumber" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Address" class="form-label"></label>
+            <input asp-for="Address" class="form-control" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <h3><i class="bi bi-person-badge"></i>ID pictures for validation</h3>
+    <p>Upload a clear photo of the <strong>front</strong> and <strong>back</strong> of your school ID. The athletics office uses these to verify your identity before the tryout.</p>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="IdPictureFront" class="form-label"></label>
+            <input asp-for="IdPictureFront" type="file" accept="image/png,image/jpeg,image/webp" class="form-control" />
+            @if (!string.IsNullOrEmpty(Model.ExistingFrontPath))
+            {
+                <div class="id-photo mt-2">
+                    <img src="@Model.ExistingFrontPath" alt="Current ID front picture" />
+                    <small class="text-muted d-block mt-1">Current front picture</small>
+                </div>
+            }
+            <div class="form-text">JPG, PNG or WEBP, up to 5 MB.</div>
+            <span asp-validation-for="IdPictureFront" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="IdPictureBack" class="form-label"></label>
+            <input asp-for="IdPictureBack" type="file" accept="image/png,image/jpeg,image/webp" class="form-control" />
+            @if (!string.IsNullOrEmpty(Model.ExistingBackPath))
+            {
+                <div class="id-photo mt-2">
+                    <img src="@Model.ExistingBackPath" alt="Current ID back picture" />
+                    <small class="text-muted d-block mt-1">Current back picture</small>
+                </div>
+            }
+            <div class="form-text">JPG, PNG or WEBP, up to 5 MB.</div>
+            <span asp-validation-for="IdPictureBack" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <h3><i class="bi bi-heart-pulse"></i>Physical and emergency details</h3>
+    <p>Optional, but helpful for coaches during tryouts.</p>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label asp-for="HeightCm" class="form-label"></label>
+            <input asp-for="HeightCm" type="number" step="0.1" class="form-control" />
+            <span asp-validation-for="HeightCm" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="WeightKg" class="form-label"></label>
+            <input asp-for="WeightKg" type="number" step="0.1" class="form-control" />
+            <span asp-validation-for="WeightKg" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="EmergencyContactName" class="form-label"></label>
+            <input asp-for="EmergencyContactName" class="form-control" />
+            <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="EmergencyContactNumber" class="form-label"></label>
+            <input asp-for="EmergencyContactNumber" class="form-control" />
+            <span asp-validation-for="EmergencyContactNumber" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="MedicalNotes" class="form-label"></label>
+            <textarea asp-for="MedicalNotes" rows="2" class="form-control" placeholder="Allergies, conditions or medications the coach should know about"></textarea>
+            <span asp-validation-for="MedicalNotes" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <h3><i class="bi bi-trophy"></i>Sport selection</h3>
+    <p>You can try out for several sports — register once per sport you want to try.</p>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="SportId" class="form-label"></label>
+            <select asp-for="SportId" class="form-select" data-sport-select>
+                <option value="">Select a sport</option>
+                @foreach (var s in Model.Sports)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </select>
+            <span asp-validation-for="SportId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="TryoutScheduleId" class="form-label"></label>
+            <select asp-for="TryoutScheduleId" class="form-select" data-schedule-select>
+                <option value="">Not sure yet</option>
+                @foreach (var t in Model.Schedules)
+                {
+                    <option value="@t.Id" data-sport="@t.SportId">@t.Label</option>
+                }
+            </select>
+            <div class="form-text" id="scheduleHint">Optional. You can also pick a date later.</div>
+            <span asp-validation-for="TryoutScheduleId" class="text-danger"></span>
+        </div>
+    </div>
+</div>

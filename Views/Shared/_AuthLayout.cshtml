@@ -1,0 +1,127 @@
+@{
+    var heroTitle = ViewData["HeroTitle"] as string ?? "Every tryout, scored fairly and decided clearly.";
+    var heroSubtitle = ViewData["HeroSubtitle"] as string ?? "Register, evaluate and select varsity athletes in one place, from the first sign-up to the final roster.";
+    var heroStats = ViewData["HeroStats"] as AuthHeroStatsViewModel;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - TMC Sports Tryouts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body class="auth-body">
+<div class="auth-shell">
+    <section class="auth-hero">
+        <svg class="court-lines" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="60" y="80" width="480" height="640" rx="6" />
+                <line x1="60" y1="400" x2="540" y2="400" />
+                <circle cx="300" cy="400" r="84" />
+                <path d="M190 80 v150 h220 v-150" />
+                <path d="M190 720 v-150 h220 v150" />
+                <path d="M228 230 a72 72 0 0 0 144 0" />
+                <path d="M228 570 a72 72 0 0 1 144 0" />
+            </g>
+        </svg>
+
+        <div class="auth-hero-inner">
+            <div class="brand brand-light">
+                <span class="brand-mark"><i class="bi bi-trophy-fill"></i></span>
+                <span class="brand-text">
+                    <strong>TMC Tryouts</strong>
+                    <small>Trinidad Municipal College</small>
+                </span>
+            </div>
+
+            <div class="hero-copy">
+                <h1>@heroTitle</h1>
+                <p>@heroSubtitle</p>
+                <div class="hero-chips">
+                    <span class="hero-chip"><i class="bi bi-clipboard2-check"></i> Digital evaluation sheets</span>
+                    <span class="hero-chip"><i class="bi bi-graph-up-arrow"></i> Live scoring &amp; analytics</span>
+                    <span class="hero-chip"><i class="bi bi-trophy"></i> Transparent final rosters</span>
+                    <span class="hero-chip"><i class="bi bi-people"></i> For admins, coaches &amp; students</span>
+                </div>
+            </div>
+
+            @if (heroStats is { HasData: true })
+            {
+                <div class="scorecard scorecard-real">
+                    <div class="scorecard-head">
+                        <span class="avatar avatar-gold">@(heroStats.SportName.Length >= 2 ? heroStats.SportName[..2].ToUpperInvariant() : heroStats.SportName.ToUpperInvariant())</span>
+                        <div>
+                            <strong>Latest tryout results</strong>
+                            <small>@heroStats.SportName &middot; @heroStats.ScheduleDate</small>
+                        </div>
+                        <span class="score-total">@heroStats.TopScore?.ToString("0.0")</span>
+                    </div>
+                    <div class="sc-stats">
+                        <div><b>@heroStats.Applicants</b><small>applicants</small></div>
+                        <div><b>@heroStats.Evaluators</b><small>evaluators</small></div>
+                        <div><b>@heroStats.Selected<span class="sc-slot-total">/@heroStats.Slots</span></b><small>selected</small></div>
+                    </div>
+                    @foreach (var (label, avg) in heroStats.Criteria)
+                    {
+                        var pct = (int)Math.Min(100, Math.Round(avg));
+                        <div class="sc-row"><span>@label</span><div class="sc-bar"><i style="width:@(pct)%"></i></div><b>@avg</b></div>
+                    }
+                    <div class="scorecard-foot">
+                        @if (heroStats.Selected > 0)
+                        {
+                            <i class="bi bi-check-circle-fill"></i> <text>@heroStats.Selected of @heroStats.Slots roster slots filled</text>
+                        }
+                        else
+                        {
+                            <i class="bi bi-info-circle-fill"></i> <text>Qualifying score: @heroStats.QualifyingScore</text>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="scorecard" aria-hidden="true">
+                    <div class="scorecard-head">
+                        <span class="avatar avatar-gold">MS</span>
+                        <div>
+                            <strong>Sample scorecard</strong>
+                            <small>Basketball &middot; Final round</small>
+                        </div>
+                        <span class="score-total">86.4</span>
+                    </div>
+                    <div class="sc-row"><span>Skill</span><div class="sc-bar"><i style="width:90%"></i></div><b>90</b></div>
+                    <div class="sc-row"><span>Speed</span><div class="sc-bar"><i style="width:84%"></i></div><b>84</b></div>
+                    <div class="sc-row"><span>Agility</span><div class="sc-bar"><i style="width:88%"></i></div><b>88</b></div>
+                    <div class="sc-row"><span>Endurance</span><div class="sc-bar"><i style="width:79%"></i></div><b>79</b></div>
+                    <div class="sc-row"><span>Teamwork</span><div class="sc-bar"><i style="width:92%"></i></div><b>92</b></div>
+                    <div class="sc-row"><span>Discipline</span><div class="sc-bar"><i style="width:85%"></i></div><b>85</b></div>
+                    <div class="scorecard-foot"><i class="bi bi-check-circle-fill"></i> Meets the qualifying score</div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="auth-panel">
+        <div class="auth-panel-inner">
+            <div class="auth-panel-top" aria-hidden="true">
+                <span class="brand-mark"><i class="bi bi-trophy-fill"></i></span>
+                <span class="auth-panel-title">TMC Tryouts</span>
+            </div>
+            @RenderBody()
+        </div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

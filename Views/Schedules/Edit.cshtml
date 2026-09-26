@@ -1,0 +1,11 @@
+@model ScheduleFormViewModel
+@{ ViewData["Title"] = "Edit schedule"; }
+<div class="page-head"><div><div class="crumbs"><a asp-action="Index">Schedules</a> / Edit schedule</div><h1>Edit @Model.Title</h1></div></div>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card-x" data-once>
+    <input type="hidden" asp-for="Id" />
+    <partial name="_ScheduleForm" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save changes</button>
+        <a asp-action="Index" class="btn btn-light-x">Cancel</a>
+    </div>
+</form>

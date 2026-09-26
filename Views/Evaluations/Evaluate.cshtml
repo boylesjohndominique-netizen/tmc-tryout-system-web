@@ -1,0 +1,74 @@
+@model EvaluationFormViewModel
+@{ ViewData["Title"] = "Evaluate " + Model.ApplicantName; }
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Evaluations</a> / @Model.ApplicantName</div>
+        <h1>Evaluate @Model.ApplicantName</h1>
+        <p><i class="bi bi-@Model.SportIcon me-1"></i>@Model.SportName &middot; @Model.StudentId &middot; Qualifying score: @Model.QualifyingScore</p>
+    </div>
+</div>
+
+<form asp-action="Evaluate" asp-route-id="@Model.ApplicantId" method="post" data-once data-eval-form data-required="@Model.QualifyingScore">
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-clipboard2-pulse"></i>Performance criteria</h2></div>
+            <div class="card-x-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+                <div class="criteria-grid">
+                    @{
+                        (string Name, string Prop, string Icon)[] criteria =
+                        {
+                            ("Skill", nameof(Model.Skill), "bullseye"),
+                            ("Speed", nameof(Model.Speed), "lightning-charge"),
+                            ("Agility", nameof(Model.Agility), "arrow-repeat"),
+                            ("Endurance", nameof(Model.Endurance), "activity"),
+                            ("Teamwork", nameof(Model.Teamwork), "people"),
+                            ("Discipline", nameof(Model.Discipline), "shield-check"),
+                            ("Overall performance", nameof(Model.OverallPerformance), "star")
+                        };
+                    }
+                    @foreach (var c in criteria)
+                    {
+                        int value = c.Prop switch
+                        {
+                            nameof(Model.Skill) => Model.Skill, nameof(Model.Speed) => Model.Speed,
+                            nameof(Model.Agility) => Model.Agility, nameof(Model.Endurance) => Model.Endurance,
+                            nameof(Model.Teamwork) => Model.Teamwork, nameof(Model.Discipline) => Model.Discipline,
+                            _ => Model.OverallPerformance
+                        };
+                        <div class="criterion" data-criterion-row>
+                            <div class="criterion-top">
+                                <label for="range-@c.Prop"><i class="bi bi-@c.Icon me-1 text-primary"></i>@c.Name</label>
+                                <input type="number" min="0" max="100" class="form-control form-control-sm criterion-value" id="num-@c.Prop" name="@c.Prop" value="@value" data-criterion />
+                            </div>
+                            <input type="range" min="0" max="100" class="form-range" id="range-@c.Prop" value="@value" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card-x mt-3">
+            <div class="card-x-head"><h2><i class="bi bi-chat-left-text"></i>Comments</h2></div>
+            <div class="card-x-body">
+                <textarea name="Comments" rows="3" class="form-control" placeholder="Notes on strengths, areas to improve, or context for this score">@Model.Comments</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-x live-score">
+            <div class="card-x-body text-center">
+                <div class="text-muted fw-semibold mb-1">Overall score</div>
+                <div class="big text-primary" id="liveTotal">@(((Model.Skill + Model.Speed + Model.Agility + Model.Endurance + Model.Teamwork + Model.Discipline + Model.OverallPerformance) / 7.0).ToString("0.0"))</div>
+                <div class="my-2" id="liveVerdict"></div>
+                <div class="text-muted small mb-3">Average of the seven criteria above. Qualifying score for @Model.SportName is @Model.QualifyingScore.</div>
+                <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-check2 me-1"></i>@(Model.IsEdit ? "Update evaluation" : "Save evaluation")</button>
+                <a asp-controller="Applicants" asp-action="Details" asp-route-id="@Model.ApplicantId" class="btn btn-light-x w-100">Cancel</a>
+            </div>
+        </div>
+    </div>
+</div>
+</form>

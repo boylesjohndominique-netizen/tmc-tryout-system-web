@@ -1,0 +1,167 @@
+@model StudentRegistrationsViewModel
+@{
+    ViewData["Title"] = "My registration";
+    var first = Model.Entries.OrderBy(a => a.Id).FirstOrDefault();
+    bool hasAny = Model.Entries.Count > 0;
+}
+
+<div class="page-head">
+    <div>
+        <h1>My registrations</h1>
+        <p>You can try out for several sports — one entry per sport.</p>
+    </div>
+    @if (hasAny && Model.OpenSports.Count > 0)
+    {
+        <div class="page-actions">
+            <a asp-controller="Explore" asp-action="Index" class="btn btn-light-x"><i class="bi bi-compass me-1"></i>Browse sports</a>
+            <a asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Add a sport</a>
+        </div>
+    }
+</div>
+
+@if (!hasAny)
+{
+    <div class="card-x">
+        <div class="empty-state">
+            <div class="icon-tile gold"><i class="bi bi-trophy"></i></div>
+            <h3>You have not registered yet</h3>
+            <p>Register your details and pick every sport you want to try out for.</p>
+            <a asp-action="Create" class="btn btn-gold">Start registration</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var a in Model.Entries)
+        {
+            bool editable = a.Status == SelectionStatus.Pending && a.EvaluationCount == 0;
+            <div class="col-lg-6">
+                <div class="card-x h-100">
+                    <div class="card-x-head">
+                        <h2><i class="bi bi-@(a.Sport?.Icon ?? "trophy")"></i>@a.Sport?.Name</h2>
+                        <partial name="_StatusBadge" model="a.Status" />
+                    </div>
+                    <div class="card-x-body">
+                        <partial name="_ResultPanel" model="a" />
+                        <dl class="detail-list mt-3">
+                            <div><dt>Student ID</dt><dd>@a.StudentId</dd></div>
+                            <div><dt>Course / year</dt><dd>@a.CourseOrGrade &middot; @a.YearLevel</dd></div>
+                            <div><dt>Tryout schedule</dt><dd>@(a.Schedule?.Title ?? "Not assigned yet")</dd></div>
+                            <div><dt>Registered on</dt><dd>@a.RegisteredAt.ToString("MMM d, yyyy")</dd></div>
+                        </dl>
+
+                        @if (Model.SchedulesPerEntry.TryGetValue(a.Id, out var upcoming) && upcoming.Count > 0 && editable)
+                        {
+                            <div class="mt-2 mb-2"><small class="text-muted fw-semibold">Upcoming @a.Sport?.Name tryout dates</small></div>
+                            foreach (var t in upcoming.Take(2))
+                            {
+                                <div class="schedule-item py-2">
+                                    <div class="date-tile"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                                    <div class="grow">
+                                        <strong>@t.Title</strong>
+                                        <small>@t.StartAt.ToString("dddd, h:mm tt") &middot; @t.Venue</small>
+                                    </div>
+                                    @if (a.TryoutScheduleId == t.Id)
+                                    {
+                                        <span class="badge-soft badge-soft-success"><i class="bi bi-check-circle-fill"></i>Yours</span>
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @if (!editable)
+                        {
+                            <div class="alert alert-info alert-x mt-2 py-2"><i class="bi bi-lock"></i><div>Locked because evaluation has started. Contact the athletics office for changes.</div></div>
+                        }
+                    </div>
+                    @if (editable)
+                    {
+                        <div class="card-x-foot d-flex gap-2">
+                            <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-light-x"><i class="bi bi-pencil me-1"></i>Edit</a>
+                            <form asp-action="Withdraw" asp-route-id="@a.Id" method="post" data-confirm="Withdraw your @a.Sport?.Name registration? You can register again later.">
+                                <button type="submit" class="btn btn-sm btn-outline-primary text-danger border-danger"><i class="bi bi-x-circle me-1"></i>Withdraw</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.OpenSports.Count > 0)
+    {
+        <div class="card-x mt-3">
+            <div class="card-x-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div>
+                    <strong>Want to try out for more sports?</strong>
+                    <div class="text-muted small">You are not registered for: @string.Join(", ", Model.OpenSports.Select(s => s.Name))</div>
+                </div>
+                <a asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Add another sport</a>
+            </div>
+        </div>
+    }
+}
+
+@* Shared student profile summary with ID pictures *@
+@if (first != null)
+{
+    <div class="card-x mt-3">
+        <div class="card-x-head"><h2><i class="bi bi-person-vcard"></i>Your student profile</h2></div>
+        <div class="card-x-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-7">
+                    <dl class="detail-list">
+                        <div><dt>Full name</dt><dd>@first.DisplayName</dd></div>
+                        <div><dt>Student ID</dt><dd>@first.StudentId</dd></div>
+                        <div><dt>Course / year</dt><dd>@first.CourseOrGrade &middot; @first.YearLevel</dd></div>
+                        <div><dt>Contact</dt><dd>@first.ContactNumber @(string.IsNullOrEmpty(first.Email) ? "" : "· " + first.Email)</dd></div>
+                        <div>
+                            <dt>ID verification</dt>
+                            <dd>
+                                @if (first.IdVerified)
+                                {
+                                    <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Pending review</span>
+                                }
+                            </dd>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(first.VerificationRemarks))
+                        {
+                            <div><dt>Office remarks</dt><dd>@first.VerificationRemarks</dd></div>
+                        }
+                    </dl>
+                </div>
+                <div class="col-md-5">
+                    <div class="d-flex gap-3">
+                        <div class="id-photo">
+                            @if (!string.IsNullOrEmpty(first.IdPictureFrontPath))
+                            {
+                                <img src="@first.IdPictureFrontPath" alt="ID front" />
+                            }
+                            else
+                            {
+                                <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                            }
+                            <small class="text-muted d-block text-center mt-1">Front</small>
+                        </div>
+                        <div class="id-photo">
+                            @if (!string.IsNullOrEmpty(first.IdPictureBackPath))
+                            {
+                                <img src="@first.IdPictureBackPath" alt="ID back" />
+                            }
+                            else
+                            {
+                                <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                            }
+                            <small class="text-muted d-block text-center mt-1">Back</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

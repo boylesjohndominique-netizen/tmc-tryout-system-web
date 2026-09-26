@@ -1,0 +1,68 @@
+@model SportFormViewModel
+<div class="form-section">
+    <h3><i class="bi bi-info-circle"></i>Sport details</h3>
+    <p>Students see the name and description when they register.</p>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" placeholder="e.g. Basketball" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="QualifyingScore" class="form-label"></label>
+            <input asp-for="QualifyingScore" type="number" min="0" max="100" class="form-control" />
+            <div class="form-text">Overall score needed to qualify (0 to 100).</div>
+            <span asp-validation-for="QualifyingScore" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Slots" class="form-label"></label>
+            <input asp-for="Slots" type="number" min="1" class="form-control" placeholder="Optional" />
+            <div class="form-text">Maximum athletes on the roster.</div>
+            <span asp-validation-for="Slots" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" rows="3" class="form-control" placeholder="Short description of the team and events"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Icon</label>
+            <div class="icon-picker">
+                @foreach (var icon in UiHelpers.SportIcons)
+                {
+                    <input type="radio" name="Icon" id="icon-@icon" value="@icon" checked="@(Model.Icon == icon)" />
+                    <label for="icon-@icon" title="@icon"><i class="bi bi-@icon"></i></label>
+                }
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label">Open for student registration</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <h3><i class="bi bi-person-badge"></i>Coaches and evaluators</h3>
+    <p>Assigned staff can view applicants for this sport, record evaluations and see its reports.</p>
+    @if (Model.AvailableStaff.Count == 0)
+    {
+        <div class="text-muted">No active coach or evaluator accounts yet. Create them under User accounts.</div>
+    }
+    else
+    {
+        <div class="staff-picker">
+            @foreach (var u in Model.AvailableStaff)
+            {
+                <label class="staff-option">
+                    <input type="checkbox" class="form-check-input" name="StaffIds" value="@u.Id" checked="@(Model.StaffIds.Contains(u.Id))" />
+                    <span class="avatar avatar-sm">@char.ToUpperInvariant(u.FullName[0])</span>
+                    <span><strong>@u.FullName</strong><small>@u.Role</small></span>
+                </label>
+            }
+        </div>
+    }
+</div>

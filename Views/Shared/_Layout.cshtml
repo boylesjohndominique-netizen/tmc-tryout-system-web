@@ -1,0 +1,150 @@
+@{
+    var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    string Active(params string[] names) =>
+        names.Any(n => string.Equals(n, controller, StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    bool isStudent = role == Roles.Student;
+    bool isAdmin = role == Roles.Admin;
+    bool canDecide = role == Roles.Admin || role == Roles.Coach;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - TMC Sports Tryouts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="app-body">
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" asp-controller="Home" asp-action="Index" aria-label="TMC Tryouts home">
+            <span class="brand-mark"><i class="bi bi-trophy-fill"></i></span>
+            <span class="brand-text">
+                <strong>TMC Tryouts</strong>
+                <small>Trinidad Municipal College</small>
+            </span>
+        </a>
+
+        <nav class="side-nav">
+            <a class="side-link @Active("Home")" asp-controller="Home" asp-action="Index"><i class="bi bi-grid-1x2"></i><span class="side-label">Dashboard</span></a>
+
+            @if (isStudent)
+            {
+                <div class="side-group">My tryout</div>
+                <a class="side-link @Active("Registration")" asp-controller="Registration" asp-action="Index"><i class="bi bi-person-vcard"></i><span class="side-label">My registration</span></a>
+                <a class="side-link @Active("Explore")" asp-controller="Explore" asp-action="Index"><i class="bi bi-compass"></i><span class="side-label">Explore sports</span></a>
+                <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
+            }
+            else
+            {
+                <div class="side-group">Tryouts</div>
+                <a class="side-link @Active("Applicants")" asp-controller="Applicants" asp-action="Index"><i class="bi bi-people"></i><span class="side-label">Applicant records</span></a>
+                <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
+                <a class="side-link @Active("Evaluations")" asp-controller="Evaluations" asp-action="Index"><i class="bi bi-clipboard2-pulse"></i><span class="side-label">Evaluations</span></a>
+                <a class="side-link @Active("Screening")" asp-controller="Screening" asp-action="Index"><i class="bi bi-bar-chart-steps"></i><span class="side-label">Screening and ranking</span></a>
+                @if (canDecide)
+                {
+                    <a class="side-link @Active("Selection")" asp-controller="Selection" asp-action="Index"><i class="bi bi-patch-check"></i><span class="side-label">Selection</span></a>
+                }
+
+                <div class="side-group">Manage</div>
+                <a class="side-link @Active("Sports")" asp-controller="Sports" asp-action="Index"><i class="bi bi-dribbble"></i><span class="side-label">Sports</span></a>
+                <a class="side-link @Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i><span class="side-label">Reports</span></a>
+                @if (isAdmin)
+                {
+                    <a class="side-link @Active("Users")" asp-controller="Users" asp-action="Index"><i class="bi bi-person-gear"></i><span class="side-label">User accounts</span></a>
+                }
+            }
+        </nav>
+
+        <div class="side-user dropup">
+            <button class="side-user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="avatar avatar-gold">@initials</span>
+                <span class="side-user-text">
+                    <strong>@fullName</strong>
+                    <small>@role</small>
+                </span>
+                <i class="bi bi-chevron-expand side-user-caret"></i>
+                <span class="side-label">My account</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i class="bi bi-person-circle me-2"></i>My profile</a></li>
+                <li><a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword"><i class="bi bi-key me-2"></i>Change password</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="main">
+        <header class="topbar">
+            <button class="btn btn-icon d-lg-none" type="button" id="sidebarToggle" aria-label="Open menu"><i class="bi bi-list"></i></button>
+            <div class="topbar-title">@ViewData["Title"]</div>
+            <div class="topbar-right">
+                <span class="role-chip"><i class="bi bi-@UiHelpers.RoleIcon(role)"></i>@role</span>
+                <span class="today d-none d-md-inline">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</span>
+                <div class="dropdown rt-bell-wrap">
+                    <button class="rt-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="rt-bell-dot" id="rtBellDot" hidden></span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end rt-bell-menu shadow" aria-labelledby="rtBellDot">
+                        <h6 class="dropdown-header">Notifications</h6>
+                        <div id="rtBellList"><div class="rt-bell-empty">No notifications yet.</div></div>
+                    </div>
+                    <div class="rt-live-pill" id="rtPill" title="Live updates connected"><i class="bi bi-broadcast"></i></div>
+                    <div id="rtToasts" class="rt-toasts"></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-fade">
+            <main class="content">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+            <div class="rt-skeleton" id="rtSkeleton" hidden>
+                <div class="rt-skel-bar" style="width:34%"></div>
+                <div class="rt-skel-chips"><span style="width:19%"></span><span style="width:19%"></span><span style="width:19%"></span></div>
+                <div class="rt-skel-table">
+                    @for (int i = 0; i < 9; i++)
+                    {
+                        <div class="rt-skel-row"><span style="width:@(38 - (i % 3) * 7)%"></span><span style="width:@(24 + (i % 4) * 6)%"></span><span style="width:14%"></span></div>
+                    }
+                    <div class="rt-skel-foot"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            &copy; @DateTime.Now.Year Trinidad Municipal College &middot; Sports Tryout System
+        </footer>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@8.0.7/dist/browser/signalr.min.js"></script>
+<script src="~/js/realtime.js" asp-append-version="true"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

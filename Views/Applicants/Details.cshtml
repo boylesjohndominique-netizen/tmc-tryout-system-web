@@ -1,0 +1,184 @@
+@model ApplicantDetailsViewModel
+@{
+    ViewData["Title"] = Model.Applicant.DisplayName;
+    var a = Model.Applicant;
+}
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-controller="Applicants" asp-action="Index">Applicant records</a> / @a.DisplayName</div>
+        <div class="profile-head">
+            <span class="avatar avatar-lg avatar-gold">@a.Initials</span>
+            <div>
+                <h2>@a.DisplayName</h2>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                    <span class="badge-soft badge-soft-info"><i class="bi bi-@(a.Sport?.Icon ?? "trophy")"></i>@a.Sport?.Name</span>
+                    <partial name="_StatusBadge" model="a.Status" />
+                    @if (a.OverallScore.HasValue)
+                    {
+                        <span class="score-pill @UiHelpers.ScoreClass(a.OverallScore.Value, a.Sport?.QualifyingScore ?? 0)">Score @a.OverallScore.Value.ToString("0.0")</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-actions">
+        @if (Model.CanEvaluate)
+        {
+            <a asp-controller="Evaluations" asp-action="Evaluate" asp-route-id="@a.Id" class="btn btn-light-x"><i class="bi bi-clipboard2-pulse me-1"></i>@(Model.MyEvaluationId.HasValue ? "Edit my evaluation" : "Evaluate")</a>
+        }
+        @if (Model.CanManage)
+        {
+            <a asp-controller="Applicants" asp-action="Edit" asp-route-id="@a.Id" class="btn btn-gold"><i class="bi bi-pencil me-1"></i>Edit record</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card-x mb-3">
+            <div class="card-x-head"><h2><i class="bi bi-person-vcard"></i>Registration details</h2></div>
+            <div class="card-x-body">
+                <dl class="detail-list">
+                    <div><dt>Student ID</dt><dd>@a.StudentId</dd></div>
+                    <div><dt>Gender</dt><dd>@a.Gender</dd></div>
+                    <div><dt>Birth date</dt><dd>@a.BirthDate.ToString("MMM d, yyyy")</dd></div>
+                    <div><dt>Course / year</dt><dd>@a.CourseOrGrade &middot; @a.YearLevel</dd></div>
+                    <div><dt>Contact number</dt><dd>@a.ContactNumber</dd></div>
+                    <div><dt>Email</dt><dd>@(a.Email ?? "-")</dd></div>
+                    <div><dt>Height / weight</dt><dd>@(a.HeightCm.HasValue ? a.HeightCm + " cm" : "-") / @(a.WeightKg.HasValue ? a.WeightKg + " kg" : "-")</dd></div>
+                    <div><dt>Address</dt><dd>@(a.Address ?? "-")</dd></div>
+                    <div><dt>Emergency contact</dt><dd>@(a.EmergencyContactName ?? "-") @(string.IsNullOrEmpty(a.EmergencyContactNumber) ? "" : "· " + a.EmergencyContactNumber)</dd></div>
+                    <div><dt>Tryout schedule</dt><dd>@(a.Schedule?.Title ?? "Not assigned")</dd></div>
+                    <div><dt>Registered on</dt><dd>@a.RegisteredAt.ToString("MMM d, yyyy")</dd></div>
+                </dl>
+                @if (!string.IsNullOrWhiteSpace(a.MedicalNotes))
+                {
+                    <hr /><dt class="mb-1">Medical notes</dt><dd class="mb-0">@a.MedicalNotes</dd>
+                }
+            </div>
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-clipboard2-pulse"></i>Evaluations</h2><span class="text-muted small">@Model.Evaluations.Count recorded</span></div>
+            @if (Model.Evaluations.Count == 0)
+            {
+                <div class="empty-state"><h3>No evaluations yet</h3><p>Scores will appear here once a coach or evaluator records them.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive-x">
+                    <table class="table table-x">
+                        <thead><tr><th>Evaluator</th><th>Skill</th><th>Speed</th><th>Agility</th><th>Endurance</th><th>Teamwork</th><th>Discipline</th><th>Overall perf.</th><th>Avg.</th></tr></thead>
+                        <tbody>
+                        @foreach (var e in Model.Evaluations)
+                        {
+                            <tr>
+                                <td>@e.Evaluator?.FullName<span class="cell-sub">@e.EvaluatedAt.ToString("MMM d, yyyy")</span></td>
+                                <td>@e.Skill</td><td>@e.Speed</td><td>@e.Agility</td><td>@e.Endurance</td><td>@e.Teamwork</td><td>@e.Discipline</td><td>@e.OverallPerformance</td>
+                                <td><span class="score-pill @UiHelpers.ScoreClass(e.Average, a.Sport?.QualifyingScore ?? 0)">@e.Average.ToString("0.0")</span></td>
+                            </tr>
+                            @if (!string.IsNullOrWhiteSpace(e.Comments))
+                            {
+                                <tr><td colspan="9" class="text-muted small pt-0"><i class="bi bi-chat-left-text me-1"></i>@e.Comments</td></tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        @if (Model.CanManage)
+        {
+            <div class="card-x mb-3">
+                <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>ID verification</h2></div>
+                <div class="card-x-body">
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="id-photo">
+                            @if (!string.IsNullOrEmpty(a.IdPictureFrontPath))
+                            {
+                                <a href="@a.IdPictureFrontPath" target="_blank"><img src="@a.IdPictureFrontPath" alt="ID front" /></a>
+                            }
+                            else
+                            {
+                                <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                            }
+                            <small class="text-muted d-block text-center mt-1">Front</small>
+                        </div>
+                        <div class="id-photo">
+                            @if (!string.IsNullOrEmpty(a.IdPictureBackPath))
+                            {
+                                <a href="@a.IdPictureBackPath" target="_blank"><img src="@a.IdPictureBackPath" alt="ID back" /></a>
+                            }
+                            else
+                            {
+                                <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                            }
+                            <small class="text-muted d-block text-center mt-1">Back</small>
+                        </div>
+                    </div>
+                    @if (a.IdVerified)
+                    {
+                        <p class="mb-2"><span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Verified @(a.VerifiedAt.HasValue ? "on " + a.VerifiedAt.Value.ToString("MMM d, yyyy") : "")</span></p>
+                    }
+                    else
+                    {
+                        <p class="mb-2"><span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Awaiting verification</span></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(a.VerificationRemarks))
+                    {
+                        <div class="text-muted small mb-2"><i class="bi bi-chat-left-text me-1"></i>@a.VerificationRemarks</div>
+                    }
+                    <form asp-action="Verify" method="post" class="d-flex flex-column gap-2" data-once>
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input name="remarks" class="form-control form-control-sm" placeholder="Remarks (optional)" value="@a.VerificationRemarks" />
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill"><i class="bi bi-check2 me-1"></i>Approve</button>
+                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+        @if (Model.CanDecide)
+        {
+            <div class="card-x mb-3">
+                <div class="card-x-head"><h2><i class="bi bi-patch-check"></i>Selection decision</h2></div>
+                <div class="card-x-body">
+                    <form asp-controller="Selection" asp-action="Decide" method="post" data-once>
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input type="hidden" name="returnUrl" value="@($"/Applicants/Details/{a.Id}")" />
+                        <div class="mb-3 d-flex flex-column gap-2">
+                            @foreach (SelectionStatus s in Enum.GetValues(typeof(SelectionStatus)))
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status" id="st-@s" value="@s" checked="@(a.Status == s)" />
+                                    <label class="form-check-label" for="st-@s"><partial name="_StatusBadge" model="s" /></label>
+                                </div>
+                            }
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks (optional)</label>
+                            <textarea name="remarks" rows="2" class="form-control" placeholder="Visible to the applicant">@a.StatusRemarks</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check2 me-1"></i>Save decision</button>
+                    </form>
+                </div>
+            </div>
+        }
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-@(a.Sport?.Icon ?? "trophy")"></i>Sport</h2></div>
+            <div class="card-x-body">
+                <h3 class="h5 fw-bold">@a.Sport?.Name</h3>
+                <div class="text-muted mb-2">@a.Sport?.Description</div>
+                <div class="d-flex gap-3">
+                    <div><small class="text-muted d-block">Qualifying score</small><strong>@a.Sport?.QualifyingScore</strong></div>
+                    <div><small class="text-muted d-block">Roster slots</small><strong>@(a.Sport?.Slots?.ToString() ?? "-")</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,54 @@
+@model ScheduleFormViewModel
+<div class="form-section">
+    <h3><i class="bi bi-calendar-event"></i>Tryout details</h3>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="SportId" class="form-label"></label>
+            <select asp-for="SportId" class="form-select">
+                <option value="">Select a sport</option>
+                @foreach (var s in Model.Sports)
+                {
+                    <option value="@s.Id">@s.Name</option>
+                }
+            </select>
+            <span asp-validation-for="SportId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" placeholder="e.g. Basketball Tryouts - Round 1" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Date" class="form-label"></label>
+            <input asp-for="Date" type="date" class="form-control" />
+            <span asp-validation-for="Date" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="StartTime" class="form-label"></label>
+            <input asp-for="StartTime" type="time" class="form-control" />
+            <span asp-validation-for="StartTime" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="EndTime" class="form-label"></label>
+            <input asp-for="EndTime" type="time" class="form-control" />
+            <span asp-validation-for="EndTime" class="text-danger"></span>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Venue" class="form-label"></label>
+            <input asp-for="Venue" class="form-control" placeholder="e.g. College Gymnasium" />
+            <span asp-validation-for="Venue" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check form-switch mt-4">
+                <input asp-for="IsCancelled" class="form-check-input" />
+                <label asp-for="IsCancelled" class="form-check-label">Cancelled</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" rows="2" class="form-control" placeholder="What applicants should bring or know"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+    </div>
+</div>

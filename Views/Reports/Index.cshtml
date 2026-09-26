@@ -1,0 +1,23 @@
+@{ ViewData["Title"] = "Reports"; }
+
+<div class="page-head">
+    <div>
+        <h1>Reports</h1>
+        <p>Generate and export reports for the athletics office.</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    @foreach (var r in TmcTryoutSystem.Controllers.ReportsController.Catalog)
+    {
+        <div class="col-md-6 col-xl-4">
+            <a class="card-x report-card" asp-action="Run" asp-route-type="@r.Key">
+                <div class="icon-tile"><i class="bi bi-@r.Icon"></i></div>
+                <div>
+                    <h3>@r.Title</h3>
+                    <p>@r.Description</p>
+                </div>
+            </a>
+        </div>
+    }
+</div>

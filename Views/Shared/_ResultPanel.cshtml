@@ -1,0 +1,36 @@
+@model Applicant
+@{
+    string cls, icon, title, text;
+    switch (Model.Status)
+    {
+        case SelectionStatus.Selected:
+            cls = "result-selected"; icon = "trophy-fill"; title = "Congratulations, you are selected";
+            text = "You made the " + Model.Sport?.Name + " roster. The coach will contact you about the next steps.";
+            break;
+        case SelectionStatus.NotSelected:
+            cls = "result-not"; icon = "emoji-smile"; title = "You were not selected this time";
+            text = "Thank you for trying out for " + Model.Sport?.Name + ". Keep training and try again in the next season.";
+            break;
+        case SelectionStatus.ForFurtherEvaluation:
+            cls = "result-further"; icon = "hourglass-split"; title = "You are up for further evaluation";
+            text = "The coaches need another look before deciding. Watch for a new tryout date.";
+            break;
+        default:
+            cls = "result-pending"; icon = "clock-history"; title = "Your result is pending";
+            text = Model.EvaluationCount > 0
+                ? "Your tryout has been evaluated. The coaches are reviewing the results."
+                : "Your registration is in. Attend your tryout and the coaches will evaluate you.";
+            break;
+    }
+}
+<div class="result-panel @cls">
+    <i class="bi bi-@icon icon"></i>
+    <div>
+        <h3 class="h5 fw-bold mb-1" style="color:inherit">@title</h3>
+        <div>@text</div>
+        @if (!string.IsNullOrWhiteSpace(Model.StatusRemarks))
+        {
+            <div class="mt-2 fw-semibold"><i class="bi bi-chat-left-text me-1"></i>Coach's note: @Model.StatusRemarks</div>
+        }
+    </div>
+</div>

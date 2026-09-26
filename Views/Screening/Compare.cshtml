@@ -1,0 +1,70 @@
+@model CompareViewModel
+@{ ViewData["Title"] = "Compare applicants"; }
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Screening and ranking</a> / Compare</div>
+        <h1>Compare applicants</h1>
+    </div>
+</div>
+
+@{
+    string[] labels = { "Skill", "Speed", "Agility", "Endurance", "Teamwork", "Discipline", "Overall performance", "Overall score" };
+    Func<ScreeningRow, int, double> pick = (r, i) => i switch
+    {
+        0 => r.Skill, 1 => r.Speed, 2 => r.Agility, 3 => r.Endurance, 4 => r.Teamwork, 5 => r.Discipline, 6 => r.OverallPerformance, _ => r.Overall
+    };
+}
+<div class="card-x">
+    <div class="table-responsive-x">
+        <table class="table table-x compare-table">
+            <thead>
+                <tr>
+                    <th>Criterion</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <th>
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <span class="avatar avatar-sm">@r.Applicant.Initials</span>
+                                @r.Applicant.DisplayName
+                                <span class="text-muted fw-normal small">@r.Applicant.Sport?.Name</span>
+                            </div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < labels.Length; i++)
+                {
+                    var values = Model.Rows.Select(r => pick(r, i)).ToList();
+                    var best = values.Max();
+                    <tr>
+                        <td class="fw-semibold">@labels[i]</td>
+                        @foreach (var r in Model.Rows)
+                        {
+                            var v = pick(r, i);
+                            <td class="@(v == best ? "compare-best" : "")">@v.ToString("0.0")</td>
+                        }
+                    </tr>
+                }
+                <tr>
+                    <td class="fw-semibold">Rank in sport</td>
+                    @foreach (var r in Model.Rows) { <td>#@r.Rank</td> }
+                </tr>
+                <tr>
+                    <td class="fw-semibold">Result</td>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            @if (r.Qualified) { <span class="badge-soft badge-soft-success">Qualified</span> }
+                            else { <span class="badge-soft badge-soft-muted">Below @r.Required</span> }
+                        </td>
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="form-actions">
+        <a asp-action="Index" class="btn btn-light-x"><i class="bi bi-arrow-left me-1"></i>Back to ranking</a>
+    </div>
+</div>

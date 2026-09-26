@@ -1,0 +1,49 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_AuthLayout";
+    ViewData["HeroTitle"] = "Your varsity journey starts here.";
+    ViewData["HeroSubtitle"] = "Create your student-athlete account and sign up for a sport tryout in minutes.";
+}
+
+<h2>Create your student account</h2>
+<p class="lead-sm">You will register for a sport right after signing up.</p>
+
+<form asp-action="Register" method="post" data-once>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" autocomplete="name" autofocus placeholder="e.g. Juan Dela Cruz" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+            <label asp-for="Username" class="form-label"></label>
+            <input asp-for="Username" class="form-control" autocomplete="username" />
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+        <div class="form-text">At least 8 characters with a letter and a number.</div>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <div class="mb-4">
+        <label asp-for="ConfirmPassword" class="form-label"></label>
+        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-gold w-100 py-2"><i class="bi bi-person-plus me-1"></i>Create account</button>
+</form>
+
+<p class="text-center mt-4 mb-0 text-muted">
+    Already have an account? <a asp-action="Login" class="fw-semibold">Sign in</a>
+</p>

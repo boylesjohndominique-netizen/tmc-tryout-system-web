@@ -1,0 +1,11 @@
+@foreach (var kind in new[] { ("Success", "success", "check-circle-fill"), ("Warning", "warning", "exclamation-triangle-fill"), ("Error", "danger", "x-octagon-fill") })
+{
+    if (TempData[kind.Item1] is string message && !string.IsNullOrWhiteSpace(message))
+    {
+        <div class="alert alert-@kind.Item2 alert-dismissible fade show alert-x" role="alert">
+            <i class="bi bi-@kind.Item3"></i>
+            <div>@message</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}

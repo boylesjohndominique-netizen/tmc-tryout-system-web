@@ -1,0 +1,174 @@
+@model ExploreSportDetailsViewModel
+@{
+    ViewData["Title"] = Model.Sport.Name;
+    bool isStudent = User.IsInRole(Roles.Student);
+    bool mine = Model.AlreadyTryingOut;
+}
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Explore sports</a> / @Model.Sport.Name</div>
+        <div class="profile-head">
+            <div class="icon-tile gold"><i class="bi bi-@Model.Sport.Icon"></i></div>
+            <div>
+                <h1>@Model.Sport.Name</h1>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                    @if (mine)
+                    {
+                        <span class="badge-soft badge-soft-success"><i class="bi bi-check-circle-fill"></i>You are trying out for this sport</span>
+                    }
+                    else if (Model.Sport.IsActive)
+                    {
+                        <span class="badge-soft badge-soft-info">Open for tryouts</span>
+                    }
+                    else
+                    {
+                        <span class="badge-soft badge-soft-muted">Not open right now</span>
+                    }
+                    <span class="badge-soft badge-soft-muted"><i class="bi bi-bullseye"></i>Qualifying score: @Model.Sport.QualifyingScore</span>
+                    @if (Model.Sport.Slots.HasValue)
+                    {
+                        <span class="badge-soft badge-soft-muted"><i class="bi bi-people"></i>@Model.CurrentPlayers.Count of @Model.Sport.Slots roster slots filled</span>
+                    }
+                </div>
+                <p class="mt-2 mb-0">@(string.IsNullOrWhiteSpace(Model.Sport.Description) ? "Try out and represent TMC in this sport." : Model.Sport.Description)</p>
+            </div>
+        </div>
+    </div>
+    <div class="page-actions">
+        @if (isStudent && !mine && Model.Sport.IsActive)
+        {
+            <a asp-controller="Registration" asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Try out for @Model.Sport.Name</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card-x mb-3">
+            <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>Coaches and evaluators</h2></div>
+            <div class="card-x-body">
+                @if (Model.Coaches.Count == 0 && Model.Evaluators.Count == 0)
+                {
+                    <span class="text-muted">Nobody is assigned yet.</span>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var c in Model.Coaches)
+                        {
+                            <div class="person">
+                                <span class="avatar avatar-sm">@char.ToUpperInvariant(c.FullName[0])</span>
+                                <span><strong>@c.FullName</strong><small><i class="bi bi-clipboard2-pulse-fill me-1"></i>Coach</small></span>
+                            </div>
+                        }
+                        @foreach (var e in Model.Evaluators)
+                        {
+                            <div class="person">
+                                <span class="avatar avatar-sm">@char.ToUpperInvariant(e.FullName[0])</span>
+                                <span><strong>@e.FullName</strong><small><i class="bi bi-clipboard-check-fill me-1"></i>Tryout evaluator</small></span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-calendar-event"></i>Tryout schedules</h2></div>
+            @if (Model.UpcomingSchedules.Count == 0 && Model.PastSchedules.Count == 0)
+            {
+                <div class="empty-state"><h3>No schedules yet</h3><p>The athletics office will post tryout dates here.</p></div>
+            }
+            else
+            {
+                foreach (var t in Model.UpcomingSchedules)
+                {
+                    <div class="schedule-item">
+                        <div class="date-tile"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                        <div class="grow">
+                            <strong>@t.Title</strong>
+                            <small>@t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; @t.Venue</small>
+                        </div>
+                        <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
+                    </div>
+                }
+                @if (Model.PastSchedules.Count > 0)
+                {
+                    <div class="px-3 pt-3 pb-1"><small class="text-muted fw-semibold">Recent past tryouts</small></div>
+                    foreach (var t in Model.PastSchedules)
+                    {
+                        <div class="schedule-item opacity-75">
+                            <div class="date-tile past"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                            <div class="grow">
+                                <strong>@t.Title</strong>
+                                <small>@t.StartAt.ToString("MMM d, yyyy") &middot; @t.Venue</small>
+                            </div>
+                            <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card-x mb-3">
+            <div class="card-x-head">
+                <h2><i class="bi bi-patch-check"></i>Current players</h2>
+                <span class="text-muted small">Selected athletes of the @Model.Sport.Name team</span>
+            </div>
+            @if (Model.CurrentPlayers.Count == 0)
+            {
+                <div class="empty-state py-4"><h3>No selected players yet</h3><p>Tryouts are ongoing — the roster will fill up after selection.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive-x">
+                    <table class="table table-x">
+                        <thead><tr><th>Player</th><th>Course / year</th><th>Score</th></tr></thead>
+                        <tbody>
+                        @foreach (var p in Model.CurrentPlayers)
+                        {
+                            <tr>
+                                <td><div class="person"><span class="avatar avatar-sm">@p.Applicant.Initials</span><span><strong>@p.Applicant.DisplayName</strong><small>@p.Applicant.StudentId</small></span></div></td>
+                                <td>@p.Applicant.CourseOrGrade<span class="cell-sub">@p.Applicant.YearLevel</span></td>
+                                <td>@(p.Score.HasValue ? p.Score.Value.ToString("0.0") : "-")</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head">
+                <h2><i class="bi bi-lightning-charge"></i>Recent tryout participants</h2>
+                <span class="text-muted small">Still in the running or awaiting another look</span>
+            </div>
+            @if (Model.RecentPlayers.Count == 0)
+            {
+                <div class="empty-state py-4"><h3>No recent participants</h3><p>Students who recently registered for this sport will show up here.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive-x">
+                    <table class="table table-x">
+                        <thead><tr><th>Participant</th><th>Course / year</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach (var p in Model.RecentPlayers)
+                        {
+                            <tr>
+                                <td><div class="person"><span class="avatar avatar-sm">@p.Applicant.Initials</span><span><strong>@p.Applicant.DisplayName</strong><small>@p.Applicant.StudentId</small></span></div></td>
+                                <td>@p.Applicant.CourseOrGrade<span class="cell-sub">@p.Applicant.YearLevel</span></td>
+                                <td>@p.Status</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

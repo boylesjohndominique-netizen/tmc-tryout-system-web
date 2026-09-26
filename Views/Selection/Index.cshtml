@@ -1,0 +1,130 @@
+@model SelectionListViewModel
+@{ ViewData["Title"] = "Selection"; }
+
+<div class="page-head">
+    <div>
+        <h1>Athlete selection</h1>
+        <p>Record the final status for each applicant.</p>
+    </div>
+</div>
+
+<form method="get" class="card-x filter-bar mb-3">
+    <div class="field grow">
+        <label>Search</label>
+        <div class="search-box"><i class="bi bi-search"></i><input name="search" value="@Model.Search" class="form-control" placeholder="Name or student ID" /></div>
+    </div>
+    <div class="field">
+        <label>Sport</label>
+        <select name="sportId" class="form-select">
+            <option value="">All sports</option>
+            @foreach (var s in Model.Sports) { <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option> }
+        </select>
+    </div>
+    <div class="field">
+        <label>Status</label>
+        <select name="status" class="form-select">
+            <option value="">Any status</option>
+            @foreach (SelectionStatus s in Enum.GetValues(typeof(SelectionStatus))) { <option value="@s" selected="@(Model.Status == s.ToString())">@s.DisplayName()</option> }
+        </select>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a asp-action="Index" class="btn btn-light-x">Reset</a>
+    </div>
+</form>
+
+@if (Model.SportId.HasValue)
+{
+    var sport = Model.Sports.FirstOrDefault(s => s.Id == Model.SportId.Value);
+    if (sport != null)
+    {
+        <div class="alert alert-info alert-x mb-3">
+            <i class="bi bi-lightbulb"></i>
+            <div>
+                @(Model.SelectedPerSport.TryGetValue(sport.Id, out var sel) ? sel : 0) selected@(sport.Slots.HasValue ? " of " + sport.Slots + " slots" : "") for @sport.Name.
+                <form asp-action="SelectQualified" asp-route-sportId="@sport.Id" method="post" class="d-inline" data-confirm="Mark all pending qualified applicants for @sport.Name as Selected?">
+                    <button type="submit" class="btn btn-sm btn-gold ms-2"><i class="bi bi-magic me-1"></i>Auto-select qualified</button>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+<div class="card-x">
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state"><div class="icon-tile"><i class="bi bi-patch-check"></i></div><h3>No applicants match</h3><p>Try a different search or clear the filters.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr><th>Rank</th><th>Applicant</th><th>Sport</th><th>Score</th><th>Result</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    var a = item.Applicant;
+                    <tr>
+                        <td>@(item.Rank.HasValue ? "#" + item.Rank : "-")</td>
+                        <td><a asp-controller="Applicants" asp-action="Details" asp-route-id="@a.Id" class="person text-reset"><span class="avatar avatar-sm">@a.Initials</span><span><strong>@a.DisplayName</strong><small>@a.StudentId</small></span></a></td>
+                        <td><i class="bi bi-@(a.Sport?.Icon ?? "trophy") text-primary me-1"></i>@a.Sport?.Name</td>
+                        <td>@(item.Score.HasValue ? item.Score.Value.ToString("0.0") : "-")</td>
+                        <td>
+                            @if (item.Score.HasValue)
+                            {
+                                if (item.Qualified) { <span class="badge-soft badge-soft-success">Qualified</span> }
+                                else { <span class="badge-soft badge-soft-muted">Below requirement</span> }
+                            }
+                            else { <span class="text-muted small">Not evaluated</span> }
+                        </td>
+                        <td><partial name="_StatusBadge" model="a.Status" /></td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-light-x" data-bs-toggle="modal" data-bs-target="#decideModal"
+                                    data-id="@a.Id" data-name="@a.DisplayName" data-sub="@(a.Sport?.Name) &middot; @a.StudentId"
+                                    data-status="@a.Status" data-remarks="@a.StatusRemarks">
+                                <i class="bi bi-flag me-1"></i>Decide
+                            </button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="result-note">Showing @Model.Items.Count @(Model.Items.Count == 1 ? "applicant" : "applicants").</div>
+    }
+</div>
+
+<div class="modal fade" id="decideModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form asp-action="Decide" method="post" data-once>
+        <input type="hidden" name="id" />
+        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-flag me-1"></i>Record decision</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3"><strong id="decideName"></strong><div class="text-muted small" id="decideSub"></div></div>
+            <div class="mb-3 d-flex flex-column gap-2">
+                @foreach (SelectionStatus s in Enum.GetValues(typeof(SelectionStatus)))
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="status" id="m-st-@s" value="@s" />
+                        <label class="form-check-label" for="m-st-@s"><partial name="_StatusBadge" model="s" /></label>
+                    </div>
+                }
+            </div>
+            <div>
+                <label class="form-label">Remarks (optional)</label>
+                <textarea name="remarks" rows="2" class="form-control" placeholder="Visible to the applicant"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light-x" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save decision</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

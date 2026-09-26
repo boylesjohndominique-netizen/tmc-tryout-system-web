@@ -1,0 +1,56 @@
+@model TryoutSchedule
+@{
+    ViewData["Title"] = Model.Title;
+    bool canSchedule = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Coach);
+}
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Schedules</a> / @Model.Title</div>
+        <h1>@Model.Title</h1>
+        <p><i class="bi bi-@(Model.Sport?.Icon ?? "trophy") me-1"></i>@Model.Sport?.Name &middot; @Model.StartAt.ToString("dddd, MMMM d, yyyy") &middot; @Model.StartAt.ToString("h:mm tt") - @Model.EndAt.ToString("h:mm tt") &middot; @Model.Venue</p>
+    </div>
+    <div class="page-actions">
+        <span class="badge-soft @UiHelpers.ScheduleBadge(Model.Status)" style="align-self:center">@Model.Status</span>
+        @if (canSchedule)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold"><i class="bi bi-pencil me-1"></i>Edit</a>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.Notes))
+{
+    <div class="card-x mb-3"><div class="card-x-body"><i class="bi bi-info-circle text-primary me-2"></i>@Model.Notes</div></div>
+}
+
+<div class="card-x">
+    <div class="card-x-head">
+        <h2><i class="bi bi-people"></i>Registered applicants</h2>
+        <span class="text-muted small">@Model.Applicants.Count total</span>
+    </div>
+    @if (Model.Applicants.Count == 0)
+    {
+        <div class="empty-state"><h3>Nobody registered for this date yet</h3></div>
+    }
+    else
+    {
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr><th>Applicant</th><th>Student ID</th><th>Evaluation</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Applicants.OrderBy(a => a.LastName))
+                {
+                    <tr>
+                        <td><div class="person"><span class="avatar avatar-sm">@a.Initials</span><strong>@a.DisplayName</strong></div></td>
+                        <td>@a.StudentId</td>
+                        <td>@(a.OverallScore.HasValue ? a.OverallScore.Value.ToString("0.0") : "Not yet evaluated")</td>
+                        <td><partial name="_StatusBadge" model="a.Status" /></td>
+                        <td><a asp-controller="Applicants" asp-action="Details" asp-route-id="@a.Id" class="btn-action" title="View"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

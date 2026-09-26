@@ -1,0 +1,55 @@
+@model ReportViewModel
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Reports</a> / @Model.Title</div>
+        <h1>@Model.Title</h1>
+        <p>@Model.Description</p>
+    </div>
+    <div class="page-actions no-print">
+        <a asp-action="Run" asp-route-type="@Model.Type" asp-route-sportId="@Model.SportId" asp-route-format="csv" class="btn btn-light-x"><i class="bi bi-download me-1"></i>Export CSV</a>
+        <button type="button" class="btn btn-gold" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+    </div>
+</div>
+
+@if (Model.Sports.Count > 0)
+{
+    <form method="get" class="card-x filter-bar mb-3 no-print">
+        <input type="hidden" name="type" value="@Model.Type" />
+        <div class="field">
+            <label>Sport</label>
+            <select name="sportId" class="form-select" onchange="this.form.submit()">
+                <option value="">All sports</option>
+                @foreach (var s in Model.Sports) { <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option> }
+            </select>
+        </div>
+    </form>
+}
+
+<div class="print-head">
+    <h1>Trinidad Municipal College &middot; @Model.Title</h1>
+    <div class="text-muted">@Model.SportName &middot; Generated @DateTime.Now.ToString("MMMM d, yyyy h:mm tt")</div>
+</div>
+
+<div class="card-x">
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="empty-state"><div class="icon-tile"><i class="bi bi-file-earmark-x"></i></div><h3>No data for this report</h3><p>Try a different sport filter, or check back once more records are available.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr>@foreach (var c in Model.Columns) { <th>@c</th> }</tr></thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>@foreach (var cell in row) { <td>@cell</td> }</tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="result-note">@Model.Rows.Count @(Model.Rows.Count == 1 ? "row" : "rows") &middot; @Model.SportName</div>
+    }
+</div>

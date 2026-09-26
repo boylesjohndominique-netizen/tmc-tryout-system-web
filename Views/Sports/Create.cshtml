@@ -1,0 +1,17 @@
+@model SportFormViewModel
+@{ ViewData["Title"] = "Add sport"; }
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Sports</a> / Add sport</div>
+        <h1>Add sport</h1>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" class="card-x" data-once>
+    <partial name="_SportForm" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Add sport</button>
+        <a asp-action="Index" class="btn btn-light-x">Cancel</a>
+    </div>
+</form>

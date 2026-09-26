@@ -1,0 +1,135 @@
+@model ApplicantListViewModel
+@{
+    ViewData["Title"] = "Applicant records";
+    bool isAdmin = User.IsInRole(Roles.Admin);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Applicant records</h1>
+        <p>Search, filter and review every registered student-athlete.</p>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="page-actions"><a asp-action="Create" class="btn btn-gold"><i class="bi bi-person-plus me-1"></i>Register applicant</a></div>
+    }
+</div>
+
+<div class="card-x">
+    <form method="get" class="filter-bar">
+        <div class="field grow">
+            <label for="search">Search</label>
+            <div class="search-box"><i class="bi bi-search"></i><input id="search" name="search" value="@Model.Search" class="form-control" placeholder="Name or student ID" /></div>
+        </div>
+        <div class="field">
+            <label for="sportId">Sport</label>
+            <select id="sportId" name="sportId" class="form-select">
+                <option value="">All sports</option>
+                @foreach (var s in Model.Sports) { <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option> }
+            </select>
+        </div>
+        <div class="field">
+            <label for="scheduleId">Tryout schedule</label>
+            <select id="scheduleId" name="scheduleId" class="form-select">
+                <option value="">All schedules</option>
+                @foreach (var t in Model.Schedules) { <option value="@t.Id" selected="@(Model.ScheduleId == t.Id)">@t.Label</option> }
+            </select>
+        </div>
+        <div class="field">
+            <label for="status">Selection status</label>
+            <select id="status" name="status" class="form-select">
+                <option value="">Any status</option>
+                @foreach (SelectionStatus s in Enum.GetValues(typeof(SelectionStatus))) { <option value="@s" selected="@(Model.Status == s.ToString())">@s.DisplayName()</option> }
+            </select>
+        </div>
+        <div class="field">
+            <label for="verification">ID verification</label>
+            <select id="verification" name="verification" class="form-select">
+                <option value="">Any</option>
+                <option value="verified" selected="@(Model.Verification == "verified")">Verified</option>
+                <option value="pending" selected="@(Model.Verification == "pending")">Not verified</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="result">Evaluation</label>
+            <select id="result" name="result" class="form-select">
+                <option value="">Any</option>
+                <option value="evaluated" selected="@(Model.Result == "evaluated")">Evaluated</option>
+                <option value="notevaluated" selected="@(Model.Result == "notevaluated")">Not evaluated</option>
+                <option value="qualified" selected="@(Model.Result == "qualified")">Qualified</option>
+                <option value="notqualified" selected="@(Model.Result == "notqualified")">Below requirement</option>
+            </select>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+            <a asp-action="Index" class="btn btn-light-x">Reset</a>
+        </div>
+    </form>
+
+    @if (Model.Applicants.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="icon-tile"><i class="bi bi-people"></i></div>
+            <h3>No applicants match your filters</h3>
+            <p>Try a different search or clear the filters.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive-x">
+            <table class="table table-x">
+                <thead><tr><th>Applicant</th><th>Course / year</th><th>Sport</th><th>ID check</th><th>Schedule</th><th>Score</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Applicants)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@a.Id" class="person text-reset">
+                                <span class="avatar avatar-sm">@a.Initials</span>
+                                <span><strong>@a.DisplayName</strong><small>@a.StudentId</small></span>
+                            </a>
+                        </td>
+                        <td>@a.CourseOrGrade<span class="cell-sub">@a.YearLevel</span></td>
+                        <td><i class="bi bi-@(a.Sport?.Icon ?? "trophy") text-primary me-1"></i>@a.Sport?.Name</td>
+                        <td>
+                            @if (a.IdVerified)
+                            {
+                                <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                            }
+                            else
+                            {
+                                <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Pending</span>
+                            }
+                        </td>
+                        <td>@(a.Schedule?.Title ?? "Not assigned")</td>
+                        <td>
+                            @if (a.OverallScore.HasValue)
+                            {
+                                <span class="score-pill @UiHelpers.ScoreClass(a.OverallScore.Value, a.Sport?.QualifyingScore ?? 0)">@a.OverallScore.Value.ToString("0.0")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Not evaluated</span>
+                            }
+                        </td>
+                        <td><partial name="_StatusBadge" model="a.Status" /></td>
+                        <td>
+                            <div class="actions">
+                                <a asp-action="Details" asp-route-id="@a.Id" class="btn-action" title="View"><i class="bi bi-eye"></i></a>
+                                @if (isAdmin)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@a.Id" class="btn-action" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <form asp-action="Delete" asp-route-id="@a.Id" method="post" data-confirm="Delete this applicant and all of their evaluations?">
+                                        <button type="submit" class="btn-action danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="result-note">Showing @Model.Applicants.Count of @Model.TotalBeforeFilter @(Model.TotalBeforeFilter == 1 ? "applicant" : "applicants").</div>
+    }
+</div>

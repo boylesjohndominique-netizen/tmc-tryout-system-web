@@ -1,0 +1,77 @@
+@model ScheduleListViewModel
+@{
+    ViewData["Title"] = "Tryout schedules";
+    bool isStudent = User.IsInRole(Roles.Student);
+    bool canSchedule = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Coach);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Tryout schedules</h1>
+        <p>@(isStudent ? "Upcoming tryout dates for your sport." : "Set dates, times and venues, and see who is registered.")</p>
+    </div>
+    @if (canSchedule)
+    {
+        <div class="page-actions"><a asp-action="Create" class="btn btn-gold"><i class="bi bi-calendar-plus me-1"></i>New schedule</a></div>
+    }
+</div>
+
+@if (!isStudent)
+{
+    <div class="d-flex flex-wrap gap-3 mb-3 align-items-center justify-content-between">
+        <div class="tabs-x">
+            <a asp-action="Index" asp-route-view="upcoming" asp-route-sportId="@Model.SportId" class="@(Model.View == "upcoming" ? "active" : "")"><i class="bi bi-calendar-event"></i>Upcoming <span class="count">@Model.UpcomingCount</span></a>
+            <a asp-action="Index" asp-route-view="completed" asp-route-sportId="@Model.SportId" class="@(Model.View == "completed" ? "active" : "")"><i class="bi bi-check-circle"></i>Completed <span class="count">@Model.CompletedCount</span></a>
+            <a asp-action="Index" asp-route-view="all" asp-route-sportId="@Model.SportId" class="@(Model.View == "all" ? "active" : "")"><i class="bi bi-list-ul"></i>All <span class="count">@Model.AllCount</span></a>
+        </div>
+        <form method="get" class="d-flex gap-2">
+            <input type="hidden" name="view" value="@Model.View" />
+            <select name="sportId" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:180px">
+                <option value="">All sports</option>
+                @foreach (var s in Model.Sports)
+                {
+                    <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option>
+                }
+            </select>
+        </form>
+    </div>
+}
+
+<div class="card-x">
+    @if (Model.Schedules.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="icon-tile"><i class="bi bi-calendar-x"></i></div>
+            <h3>No schedules to show</h3>
+            <p>@(isStudent ? "There are no upcoming tryouts for your sport yet." : "Create a tryout schedule to get started.")</p>
+        </div>
+    }
+    else
+    {
+        foreach (var t in Model.Schedules)
+        {
+            <div class="schedule-item">
+                <div class="date-tile @(t.Status == ScheduleStatus.Completed ? "past" : "")"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
+                <div class="grow">
+                    <strong>@t.Title</strong>
+                    <small><i class="bi bi-@(t.Sport?.Icon ?? "trophy") me-1"></i>@t.Sport?.Name &middot; @t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; <i class="bi bi-geo-alt"></i> @t.Venue</small>
+                </div>
+                <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
+                @if (!isStudent)
+                {
+                    <span class="badge-soft badge-soft-info"><i class="bi bi-people"></i>@(Model.RegisteredCounts.TryGetValue(t.Id, out var c) ? c : 0)</span>
+                    <div class="actions">
+                        <a asp-action="Details" asp-route-id="@t.Id" class="btn-action" title="View"><i class="bi bi-eye"></i></a>
+                        @if (canSchedule)
+                        {
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn-action" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Delete" asp-route-id="@t.Id" method="post" data-confirm="Delete this schedule?">
+                                <button type="submit" class="btn-action danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
