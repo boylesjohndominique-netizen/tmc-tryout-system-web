@@ -1,0 +1,32 @@
+# ---------- Stage 1: Build ----------
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy the project file first so NuGet restore is cached.
+COPY TmcTryoutSystem.csproj ./
+RUN dotnet restore
+
+# Copy everything else and publish a self-contained, trimmed release.
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# ---------- Stage 2: Runtime ----------
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+# ICU / globalization support (MySQL date handling, etc.).
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+# Vercel injects $PORT at runtime; ASP.NET Core picks it up via ASPNETCORE_URLS.
+# Default to port 80 when $PORT is not set (local Docker testing).
+ENV ASPNETCORE_URLS=http://+:${PORT:-80}
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+COPY --from=build /app/publish .
+
+# Ensure the uploads directory exists (Linux is case-sensitive).
+RUN mkdir -p /app/wwwroot/uploads/id-pictures
+
+EXPOSE 80
+
+ENTRYPOINT ["dotnet", "TmcTryoutSystem.dll"]

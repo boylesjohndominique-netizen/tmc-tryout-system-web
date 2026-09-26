@@ -4,3 +4,18 @@ obj/
 *.db-shm
 *.db-wal
 .vs/
+
+# Local development credentials – never commit these.
+appsettings.Development.json
+
+# User-secrets
+secrets.json
+
+# Publish output
+publish/
+
+# OS / editor
+*.user
+*.suo
+.vscode/
+
