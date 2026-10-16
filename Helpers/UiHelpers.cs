@@ -40,6 +40,14 @@ public static class UiHelpers
         "BSCrim (Bachelor of Science in Criminology)"
     };
 
+    /// <summary>The short acronym of a stored course label, e.g. "BSIT". Blank becomes "All courses".</summary>
+    public static string CourseShort(string? course)
+    {
+        if (string.IsNullOrWhiteSpace(course)) return "All courses";
+        var idx = course.IndexOf(" (", StringComparison.Ordinal);
+        return idx > 0 ? course[..idx] : course;
+    }
+
     /// <summary>
     /// TMC student number format, e.g. 24-000123: two-digit year, a dash, then six digits.
     /// </summary>

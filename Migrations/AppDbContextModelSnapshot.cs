@@ -390,6 +390,10 @@ namespace TmcTryoutSystem.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CourseOrGrade")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
+
                     b.Property<DateTime>("EndAt")
                         .HasColumnType("datetime(6)");
 

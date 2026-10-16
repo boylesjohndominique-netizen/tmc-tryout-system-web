@@ -34,6 +34,26 @@ public abstract class AppController : Controller
     protected static bool CanAccessSport(List<int>? allowed, int sportId) =>
         allowed == null || allowed.Contains(sportId);
 
+    /// <summary>
+    /// The course the signed-in user is tied to. Admins have no course limit (null), and so do
+    /// accounts that were never given a course. Students and course-scoped staff return their label.
+    /// </summary>
+    protected async Task<string?> CurrentUserCourseAsync()
+    {
+        if (IsAdmin) return null;
+        var userId = CurrentUserId;
+        return await Db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.CourseOrGrade)
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>True when a schedule's course is open to the given course (null = open to every course).</summary>
+    protected static bool MatchesCourse(string? scheduleCourse, string? userCourse) =>
+        string.IsNullOrWhiteSpace(scheduleCourse)
+        || string.IsNullOrWhiteSpace(userCourse)
+        || string.Equals(scheduleCourse, userCourse, StringComparison.OrdinalIgnoreCase);
+
     protected void Success(string message) => TempData["Success"] = message;
     protected void Warning(string message) => TempData["Warning"] = message;
     protected void Failure(string message) => TempData["Error"] = message;
