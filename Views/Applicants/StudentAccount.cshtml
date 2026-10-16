@@ -163,8 +163,8 @@
                         <input type="hidden" name="id" value="@s.Id" />
                         <input name="remarks" class="form-control form-control-sm" placeholder="Remarks for the student (optional)" value="@s.VerificationRemarks" />
                         <div class="d-flex gap-2">
-                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill"><i class="bi bi-check2 me-1"></i>Approve account</button>
-                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill" data-confirm="Approve this account? The student can then register for tryouts."><i class="bi bi-check2 me-1"></i>Approve account</button>
+                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill" data-confirm="Reject this account? The student will be asked to upload new ID photos."><i class="bi bi-x-lg me-1"></i>Reject</button>
                         </div>
                     </form>
                 }

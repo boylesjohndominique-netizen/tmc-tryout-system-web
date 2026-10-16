@@ -612,6 +612,9 @@ html.auth-html, body.auth-body {
 .input-icon .form-control { padding-left: 2.6rem; }
 .pw-toggle { position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--muted); width: 36px; height: 36px; border-radius: 8px; }
 .pw-toggle:hover { color: var(--blue); background: var(--blue-50); }
+/* Password field with the show/hide button on the right, no leading icon (account forms). */
+.input-toggle { position: relative; }
+.input-toggle .form-control { padding-right: 3rem; }
 @media (max-width: 991.98px) {
     .auth-shell { grid-template-columns: 1fr; }
     .auth-panel { padding: 1.25rem 1.25rem 2.25rem; min-height: auto; }

@@ -136,8 +136,8 @@
                         <input type="hidden" name="id" value="@a.Id" />
                         <input name="remarks" class="form-control form-control-sm" placeholder="Remarks (optional)" value="@a.VerificationRemarks" />
                         <div class="d-flex gap-2">
-                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill"><i class="bi bi-check2 me-1"></i>Approve</button>
-                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill" data-confirm="Approve this student ID? This applies to all of this student's tryout entries."><i class="bi bi-check2 me-1"></i>Approve</button>
+                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill" data-confirm="Reject this student ID? The student will be asked to upload new photos."><i class="bi bi-x-lg me-1"></i>Reject</button>
                         </div>
                     </form>
                 </div>
@@ -148,7 +148,7 @@
             <div class="card-x mb-3">
                 <div class="card-x-head"><h2><i class="bi bi-patch-check"></i>Selection decision</h2></div>
                 <div class="card-x-body">
-                    <form asp-controller="Selection" asp-action="Decide" method="post" data-once>
+                    <form asp-controller="Selection" asp-action="Decide" method="post" data-once data-confirm="Record this selection decision?">
                         <input type="hidden" name="id" value="@a.Id" />
                         <input type="hidden" name="returnUrl" value="@($"/Applicants/Details/{a.Id}")" />
                         <div class="mb-3 d-flex flex-column gap-2">
