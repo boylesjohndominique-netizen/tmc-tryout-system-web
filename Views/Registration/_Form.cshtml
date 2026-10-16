@@ -5,7 +5,7 @@
     <div class="row g-3">
         <div class="col-md-6">
             <label asp-for="StudentId" class="form-label"></label>
-            <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" />
+            <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" inputmode="numeric" maxlength="9" data-student-id />
             <div class="form-text">@UiHelpers.StudentIdHint</div>
             <span asp-validation-for="StudentId" class="text-danger"></span>
         </div>

@@ -34,7 +34,7 @@
 
     <div class="mb-3">
         <label asp-for="StudentId" class="form-label"></label>
-        <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" inputmode="numeric" autocomplete="off" />
+        <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" inputmode="numeric" maxlength="9" data-student-id autocomplete="off" />
         <div class="form-text">@UiHelpers.StudentIdHint</div>
         <span asp-validation-for="StudentId" class="text-danger"></span>
     </div>

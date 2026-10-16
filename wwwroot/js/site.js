@@ -33,6 +33,20 @@
             });
         });
 
+        // Student ID: keep the field numeric and insert the dash after the year
+        // ("24" -> "24-000123") so phone number pads never need a dash key.
+        document.querySelectorAll('[data-student-id]').forEach(function (input) {
+            input.addEventListener('input', function (e) {
+                var digits = input.value.replace(/\D/g, '').slice(0, 8);
+                var before = input.value.slice(0, input.selectionStart).replace(/\D/g, '').length;
+                input.value = digits.length > 2 ? digits.slice(0, 2) + '-' + digits.slice(2) : digits;
+                if (document.activeElement === input && e && e.inputType) {
+                    var pos = Math.min(before <= 2 ? before : before + 1, input.value.length);
+                    input.setSelectionRange(pos, pos);
+                }
+            });
+        });
+
         // Disable submit buttons after a valid submit to prevent double registrations
         document.querySelectorAll('form[data-once]').forEach(function (form) {
             form.addEventListener('submit', function () {
