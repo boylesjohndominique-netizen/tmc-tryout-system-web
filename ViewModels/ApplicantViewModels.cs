@@ -172,21 +172,25 @@ public class EvaluationFormViewModel
     public string StudentId { get; set; } = string.Empty;
     public string SportName { get; set; } = string.Empty;
     public string SportIcon { get; set; } = "trophy";
+    public string CategoryName { get; set; } = string.Empty;
     public int QualifyingScore { get; set; }
     public bool IsEdit { get; set; }
 
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Skill { get; set; } = 70;
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Speed { get; set; } = 70;
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Agility { get; set; } = 70;
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Endurance { get; set; } = 70;
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Teamwork { get; set; } = 70;
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int Discipline { get; set; } = 70;
-
-    [Display(Name = "Overall performance")]
-    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")] public int OverallPerformance { get; set; } = 70;
+    /// <summary>The criteria of the applicant's sport category, each with the evaluator's score.</summary>
+    public List<CriterionScoreInput> Criteria { get; set; } = new();
 
     [StringLength(600)]
     public string? Comments { get; set; }
+}
+
+public class CriterionScoreInput
+{
+    public int CriterionId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Icon { get; set; } = "star";
+
+    [Range(0, 100, ErrorMessage = "Enter a score from 0 to 100.")]
+    public int Value { get; set; } = 70;
 }
 
 public class ScreeningViewModel

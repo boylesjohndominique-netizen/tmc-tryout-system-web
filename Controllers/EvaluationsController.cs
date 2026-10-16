@@ -28,7 +28,7 @@ public class EvaluationsController : AppController
             .ScopeTo(allowed)
             .Include(a => a.Sport)
             .Include(a => a.Schedule)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores)
             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -65,27 +65,30 @@ public class EvaluationsController : AppController
     [HttpGet]
     public async Task<IActionResult> Evaluate(int id)
     {
-        var applicant = await Db.Applicants.Include(a => a.Sport).AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+        var applicant = await Db.Applicants
+            .Include(a => a.Sport).ThenInclude(s => s!.Category)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
         if (applicant == null) return NotFound();
 
         var allowed = await AllowedSportIdsAsync();
         if (!CanAccessSport(allowed, applicant.SportId)) return Forbid();
 
-        var myId = CurrentUserId;
-        var existing = await Db.Evaluations.AsNoTracking().FirstOrDefaultAsync(e => e.ApplicantId == id && e.EvaluatorId == myId);
+        var criteria = await LoadCriteriaAsync(applicant.Sport?.SportCategoryId);
+        var model = BuildForm(applicant, criteria);
 
-        var model = BuildForm(applicant);
+        var myId = CurrentUserId;
+        var existing = await Db.Evaluations
+            .Include(e => e.Scores)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.ApplicantId == id && e.EvaluatorId == myId);
         if (existing != null)
         {
             model.IsEdit = true;
-            model.Skill = existing.Skill;
-            model.Speed = existing.Speed;
-            model.Agility = existing.Agility;
-            model.Endurance = existing.Endurance;
-            model.Teamwork = existing.Teamwork;
-            model.Discipline = existing.Discipline;
-            model.OverallPerformance = existing.OverallPerformance;
             model.Comments = existing.Comments;
+            var byCriterion = existing.Scores.ToDictionary(s => s.EvaluationCriterionId, s => s.Value);
+            foreach (var c in model.Criteria)
+                if (byCriterion.TryGetValue(c.CriterionId, out var value)) c.Value = value;
         }
         return View(model);
     }
@@ -93,11 +96,37 @@ public class EvaluationsController : AppController
     [HttpPost]
     public async Task<IActionResult> Evaluate(int id, EvaluationFormViewModel model)
     {
-        var applicant = await Db.Applicants.Include(a => a.Sport).FirstOrDefaultAsync(a => a.Id == id);
+        var applicant = await Db.Applicants.Include(a => a.Sport).ThenInclude(s => s!.Category).FirstOrDefaultAsync(a => a.Id == id);
         if (applicant == null) return NotFound();
 
         var allowed = await AllowedSportIdsAsync();
         if (!CanAccessSport(allowed, applicant.SportId)) return Forbid();
+
+        var criteria = await LoadCriteriaAsync(applicant.Sport?.SportCategoryId);
+        if (criteria.Count == 0)
+        {
+            FillHeader(model, applicant);
+            ModelState.AddModelError(string.Empty,
+                "This sport's category has no evaluation criteria yet. Ask an administrator to add them.");
+            return View(model);
+        }
+
+        var validIds = criteria.Select(c => c.Id).ToHashSet();
+
+        // Keep only scores for criteria that belong to this sport's category, and make sure
+        // every criterion of the category is present (so removed ones cannot linger).
+        model.Criteria = (model.Criteria ?? new()).Where(c => validIds.Contains(c.CriterionId)).ToList();
+        foreach (var c in criteria)
+        {
+            var input = model.Criteria.FirstOrDefault(x => x.CriterionId == c.Id);
+            if (input == null)
+                model.Criteria.Add(new CriterionScoreInput { CriterionId = c.Id, Name = c.Name, Icon = c.Icon });
+            else
+            {
+                input.Name = c.Name;
+                input.Icon = c.Icon;
+            }
+        }
 
         if (!ModelState.IsValid)
         {
@@ -106,7 +135,9 @@ public class EvaluationsController : AppController
         }
 
         var myId = CurrentUserId;
-        var evaluation = await Db.Evaluations.FirstOrDefaultAsync(e => e.ApplicantId == id && e.EvaluatorId == myId);
+        var evaluation = await Db.Evaluations
+            .Include(e => e.Scores)
+            .FirstOrDefaultAsync(e => e.ApplicantId == id && e.EvaluatorId == myId);
         bool isNew = evaluation == null;
         if (evaluation == null)
         {
@@ -114,13 +145,17 @@ public class EvaluationsController : AppController
             Db.Evaluations.Add(evaluation);
         }
 
-        evaluation.Skill = model.Skill;
-        evaluation.Speed = model.Speed;
-        evaluation.Agility = model.Agility;
-        evaluation.Endurance = model.Endurance;
-        evaluation.Teamwork = model.Teamwork;
-        evaluation.Discipline = model.Discipline;
-        evaluation.OverallPerformance = model.OverallPerformance;
+        foreach (var c in model.Criteria)
+        {
+            var score = evaluation.Scores.FirstOrDefault(s => s.EvaluationCriterionId == c.CriterionId);
+            if (score == null)
+                evaluation.Scores.Add(new EvaluationScore { EvaluationCriterionId = c.CriterionId, Value = c.Value });
+            else
+                score.Value = c.Value;
+        }
+        foreach (var stale in evaluation.Scores.Where(s => !validIds.Contains(s.EvaluationCriterionId)).ToList())
+            evaluation.Scores.Remove(stale);
+
         evaluation.Comments = string.IsNullOrWhiteSpace(model.Comments) ? null : model.Comments.Trim();
         evaluation.EvaluatedAt = DateTime.Now;
 
@@ -155,9 +190,23 @@ public class EvaluationsController : AppController
         return RedirectToAction("Details", "Applicants", new { id = applicantId });
     }
 
-    private static EvaluationFormViewModel BuildForm(Applicant applicant)
+    private async Task<List<EvaluationCriterion>> LoadCriteriaAsync(int? categoryId)
     {
-        var model = new EvaluationFormViewModel();
+        if (!categoryId.HasValue) return new List<EvaluationCriterion>();
+        return await Db.EvaluationCriteria.AsNoTracking()
+            .Where(c => c.SportCategoryId == categoryId.Value)
+            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    private static EvaluationFormViewModel BuildForm(Applicant applicant, List<EvaluationCriterion> criteria)
+    {
+        var model = new EvaluationFormViewModel
+        {
+            Criteria = criteria
+                .Select(c => new CriterionScoreInput { CriterionId = c.Id, Name = c.Name, Icon = c.Icon })
+                .ToList()
+        };
         FillHeader(model, applicant);
         return model;
     }
@@ -169,6 +218,7 @@ public class EvaluationsController : AppController
         model.StudentId = applicant.StudentId;
         model.SportName = applicant.Sport?.Name ?? string.Empty;
         model.SportIcon = applicant.Sport?.Icon ?? "trophy";
+        model.CategoryName = applicant.Sport?.Category?.Name ?? string.Empty;
         model.QualifyingScore = applicant.Sport?.QualifyingScore ?? 0;
     }
 }

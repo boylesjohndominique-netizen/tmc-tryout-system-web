@@ -92,7 +92,7 @@
             var update = function () {
                 var sum = 0;
                 inputs.forEach(function (i) { sum += parseFloat(i.value) || 0; });
-                var avg = sum / 7;
+                var avg = inputs.length ? sum / inputs.length : 0;
                 if (totalEl) totalEl.textContent = avg.toFixed(1);
                 if (verdictEl) {
                     var ok = avg >= required;
