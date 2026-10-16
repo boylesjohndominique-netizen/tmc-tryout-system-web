@@ -22,6 +22,9 @@ public class SchedulesController : AppController
     // Everyone signed in can see schedules; students only see what is coming up.
     public async Task<IActionResult> Index(string? view, int? sportId)
     {
+        // Students keep browsing their upcoming tryouts; staff need the schedules.view capability.
+        if (!User.IsInRole(Roles.Student) && !HasPermission(Permissions.SchedulesView)) return Forbid();
+
         bool isStudent = User.IsInRole(Roles.Student);
         var allowed = isStudent ? null : await AllowedSportIdsAsync();
 
@@ -78,7 +81,7 @@ public class SchedulesController : AppController
         });
     }
 
-    [Authorize(Roles = Roles.Staff)]
+    [Authorize(Policy = Permissions.SchedulesView)]
     public async Task<IActionResult> Details(int id)
     {
         var schedule = await Db.Schedules
@@ -96,7 +99,7 @@ public class SchedulesController : AppController
     }
 
     // ---------- Create ----------
-    [Authorize(Roles = Roles.Deciders)]
+    [Authorize(Policy = Permissions.SchedulesManage)]
     [HttpGet]
     public async Task<IActionResult> Create(int? sportId)
     {
@@ -112,7 +115,7 @@ public class SchedulesController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Deciders)]
+    [Authorize(Policy = Permissions.SchedulesManage)]
     [HttpPost]
     public async Task<IActionResult> Create(ScheduleFormViewModel model)
     {
@@ -140,7 +143,7 @@ public class SchedulesController : AppController
     }
 
     // ---------- Edit ----------
-    [Authorize(Roles = Roles.Deciders)]
+    [Authorize(Policy = Permissions.SchedulesManage)]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -170,7 +173,7 @@ public class SchedulesController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Deciders)]
+    [Authorize(Policy = Permissions.SchedulesManage)]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, ScheduleFormViewModel model)
     {
@@ -217,7 +220,7 @@ public class SchedulesController : AppController
     }
 
     // ---------- Delete ----------
-    [Authorize(Roles = Roles.Deciders)]
+    [Authorize(Policy = Permissions.SchedulesManage)]
     [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {

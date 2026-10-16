@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<Evaluation> Evaluations => Set<Evaluation>();
     public DbSet<EvaluationScore> EvaluationScores => Set<EvaluationScore>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -75,5 +76,11 @@ public class AppDbContext : DbContext
         b.Entity<EvaluationScore>()
             .HasOne(s => s.Criterion).WithMany()
             .HasForeignKey(s => s.EvaluationCriterionId).OnDelete(DeleteBehavior.Restrict);
+
+        // One row per granted capability; deleting a staff account clears its permissions.
+        b.Entity<UserPermission>().HasIndex(p => new { p.UserId, p.Permission }).IsUnique();
+        b.Entity<UserPermission>()
+            .HasOne(p => p.User).WithMany(u => u.Permissions)
+            .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

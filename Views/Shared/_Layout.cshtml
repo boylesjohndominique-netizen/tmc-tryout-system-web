@@ -9,9 +9,21 @@
     var profilePicture = User.FindFirst(ProfileClaims.Picture)?.Value;
     bool isStudent = role == Roles.Student;
     bool isAdmin = role == Roles.Admin;
-    bool canDecide = role == Roles.Admin || role == Roles.Coach;
+    bool can(string key) => User.HasClaim(Permissions.ClaimType, key);
     bool emailVerified = User.FindFirst(VerificationClaims.EmailVerified)?.Value != "False";
     bool idVerified = User.FindFirst(VerificationClaims.IdVerified)?.Value == "True";
+
+    // Staff navigation is driven by the capabilities an administrator has granted.
+    bool applicantsView = can(Permissions.ApplicantsView);
+    bool schedulesView = can(Permissions.SchedulesView);
+    bool evaluationsView = can(Permissions.EvaluationsView);
+    bool screeningView = can(Permissions.ScreeningView);
+    bool selectionView = can(Permissions.SelectionView);
+    bool sportsView = can(Permissions.SportsView);
+    bool sportsManage = can(Permissions.SportsManage);
+    bool reportsView = can(Permissions.ReportsView);
+    bool showTryoutGroup = applicantsView || schedulesView || evaluationsView || screeningView || selectionView;
+    bool showManageGroup = sportsView || sportsManage || reportsView || isAdmin;
 }
 <!DOCTYPE html>
 <html lang="en" class="app-html">
@@ -52,23 +64,47 @@
             }
             else
             {
-                <div class="side-group">Tryouts</div>
-                <a class="side-link @Active("Applicants")" asp-controller="Applicants" asp-action="Index"><i class="bi bi-people"></i><span class="side-label">Applicant records</span></a>
-                <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
-                <a class="side-link @Active("Evaluations")" asp-controller="Evaluations" asp-action="Index"><i class="bi bi-clipboard2-pulse"></i><span class="side-label">Evaluations</span></a>
-                <a class="side-link @Active("Screening")" asp-controller="Screening" asp-action="Index"><i class="bi bi-bar-chart-steps"></i><span class="side-label">Screening and ranking</span></a>
-                @if (canDecide)
+                @if (showTryoutGroup)
+                {
+                    <div class="side-group">Tryouts</div>
+                }
+                @if (applicantsView)
+                {
+                    <a class="side-link @Active("Applicants")" asp-controller="Applicants" asp-action="Index"><i class="bi bi-people"></i><span class="side-label">Applicant records</span></a>
+                }
+                @if (schedulesView)
+                {
+                    <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
+                }
+                @if (evaluationsView)
+                {
+                    <a class="side-link @Active("Evaluations")" asp-controller="Evaluations" asp-action="Index"><i class="bi bi-clipboard2-pulse"></i><span class="side-label">Evaluations</span></a>
+                }
+                @if (screeningView)
+                {
+                    <a class="side-link @Active("Screening")" asp-controller="Screening" asp-action="Index"><i class="bi bi-bar-chart-steps"></i><span class="side-label">Screening and ranking</span></a>
+                }
+                @if (selectionView)
                 {
                     <a class="side-link @Active("Selection")" asp-controller="Selection" asp-action="Index"><i class="bi bi-patch-check"></i><span class="side-label">Selection</span></a>
                 }
 
-                <div class="side-group">Manage</div>
-                <a class="side-link @Active("Sports")" asp-controller="Sports" asp-action="Index"><i class="bi bi-dribbble"></i><span class="side-label">Sports</span></a>
-                @if (isAdmin)
+                @if (showManageGroup)
+                {
+                    <div class="side-group">Manage</div>
+                }
+                @if (sportsView)
+                {
+                    <a class="side-link @Active("Sports")" asp-controller="Sports" asp-action="Index"><i class="bi bi-dribbble"></i><span class="side-label">Sports</span></a>
+                }
+                @if (sportsManage)
                 {
                     <a class="side-link @Active("SportCategories")" asp-controller="SportCategories" asp-action="Index"><i class="bi bi-collection"></i><span class="side-label">Sport categories</span></a>
                 }
-                <a class="side-link @Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i><span class="side-label">Reports</span></a>
+                @if (reportsView)
+                {
+                    <a class="side-link @Active("Reports")" asp-controller="Reports" asp-action="Index"><i class="bi bi-file-earmark-bar-graph"></i><span class="side-label">Reports</span></a>
+                }
                 @if (isAdmin)
                 {
                     <a class="side-link @Active("Users")" asp-controller="Users" asp-action="Index"><i class="bi bi-person-gear"></i><span class="side-label">User accounts</span></a>

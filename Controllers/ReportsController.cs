@@ -27,8 +27,10 @@ public class ReportsController : AppController
 
     public ReportsController(AppDbContext db) : base(db) { }
 
+    [Authorize(Policy = Permissions.ReportsView)]
     public IActionResult Index() => View();
 
+    [Authorize(Policy = Permissions.ReportsView)]
     public async Task<IActionResult> Run(string type, int? sportId, string? format)
     {
         var entry = Catalog.FirstOrDefault(c => c.Key == type);

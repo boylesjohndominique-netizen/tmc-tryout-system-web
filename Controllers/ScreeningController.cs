@@ -14,6 +14,7 @@ public class ScreeningController : AppController
 {
     public ScreeningController(AppDbContext db) : base(db) { }
 
+    [Authorize(Policy = Permissions.ScreeningView)]
     public async Task<IActionResult> Index(int? sportId, string? filter, string? search)
     {
         var allowed = await AllowedSportIdsAsync();
@@ -58,6 +59,7 @@ public class ScreeningController : AppController
         });
     }
 
+    [Authorize(Policy = Permissions.ScreeningView)]
     public async Task<IActionResult> Compare(int[]? ids)
     {
         ids ??= Array.Empty<int>();

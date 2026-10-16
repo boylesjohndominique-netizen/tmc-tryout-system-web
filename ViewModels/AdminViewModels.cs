@@ -64,6 +64,24 @@ public class ResetPasswordViewModel
     public string ConfirmPassword { get; set; } = string.Empty;
 }
 
+/// <summary>Backs the administrator's Permissions screen for a single Coach/Evaluator account.</summary>
+public class PermissionFormViewModel
+{
+    public int Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+
+    /// <summary>Administrators are superadmins; the screen is read-only for them.</summary>
+    public bool IsAdmin { get; set; }
+
+    /// <summary>Keys currently granted, used to tick the checkboxes.</summary>
+    public List<string> Granted { get; set; } = new();
+
+    /// <summary>Keys posted back from the checkboxes.</summary>
+    public List<string>? SelectedPermissions { get; set; } = new();
+}
+
 public class SportFormViewModel
 {
     public int Id { get; set; }

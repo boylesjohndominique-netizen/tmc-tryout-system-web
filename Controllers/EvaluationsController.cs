@@ -19,6 +19,7 @@ public class EvaluationsController : AppController
         _rt = rt;
     }
 
+    [Authorize(Policy = Permissions.EvaluationsView)]
     public async Task<IActionResult> Index(string? search, int? sportId, string? show)
     {
         var allowed = await AllowedSportIdsAsync();
@@ -62,6 +63,7 @@ public class EvaluationsController : AppController
         });
     }
 
+    [Authorize(Policy = Permissions.EvaluationsManage)]
     [HttpGet]
     public async Task<IActionResult> Evaluate(int id)
     {
@@ -93,6 +95,7 @@ public class EvaluationsController : AppController
         return View(model);
     }
 
+    [Authorize(Policy = Permissions.EvaluationsManage)]
     [HttpPost]
     public async Task<IActionResult> Evaluate(int id, EvaluationFormViewModel model)
     {
@@ -172,6 +175,7 @@ public class EvaluationsController : AppController
         return RedirectToAction("Details", "Applicants", new { id });
     }
 
+    [Authorize(Policy = Permissions.EvaluationsManage)]
     [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {

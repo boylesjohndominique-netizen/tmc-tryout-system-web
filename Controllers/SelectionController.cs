@@ -9,8 +9,8 @@ using TmcTryoutSystem.ViewModels;
 
 namespace TmcTryoutSystem.Controllers;
 
-/// <summary>Final selection decisions. Only Admin and Coach roles can record them.</summary>
-[Authorize(Roles = Roles.Deciders)]
+/// <summary>Final selection decisions. Staff reach these actions through granted permissions.</summary>
+[Authorize(Roles = Roles.Staff)]
 public class SelectionController : AppController
 {
     private readonly IRealtimeNotifier _rt;
@@ -20,6 +20,7 @@ public class SelectionController : AppController
         _rt = rt;
     }
 
+    [Authorize(Policy = Permissions.SelectionView)]
     public async Task<IActionResult> Index(string? search, int? sportId, string? status)
     {
         var allowed = await AllowedSportIdsAsync();
@@ -77,6 +78,7 @@ public class SelectionController : AppController
         });
     }
 
+    [Authorize(Policy = Permissions.SelectionManage)]
     [HttpPost]
     public async Task<IActionResult> Decide(int id, SelectionStatus status, string? remarks, string? returnUrl)
     {
@@ -128,6 +130,7 @@ public class SelectionController : AppController
     }
 
     /// <summary>Marks the highest-ranked qualified pending applicants of a sport as Selected, within roster slots.</summary>
+    [Authorize(Policy = Permissions.SelectionManage)]
     [HttpPost]
     public async Task<IActionResult> SelectQualified(int sportId)
     {

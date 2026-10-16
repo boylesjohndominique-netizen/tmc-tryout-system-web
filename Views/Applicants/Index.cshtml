@@ -1,7 +1,7 @@
 @model StudentRecordListViewModel
 @{
     ViewData["Title"] = "Applicant records";
-    bool isAdmin = User.IsInRole(Roles.Admin);
+    bool canManage = UiHelpers.Can(User, Permissions.ApplicantsManage);
 }
 
 <div class="page-head">
@@ -116,7 +116,7 @@
                         <td>
                             <div class="actions">
                                 <a asp-action="StudentAccount" asp-route-id="@s.Id" class="btn-action" title="Open student account"><i class="bi bi-eye"></i></a>
-                                @if (isAdmin)
+                                @if (canManage)
                                 {
                                     <form asp-action="ToggleStudentActive" asp-route-id="@s.Id" method="post" data-confirm="@(s.IsActive ? "Deactivate this student account? They will not be able to sign in." : "Reactivate this student account?") + " (" + s.DisplayName + ")"">
                                         <button type="submit" class="btn-action" title="@(s.IsActive ? "Deactivate account" : "Reactivate account")"><i class="bi @(s.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i></button>

@@ -1,8 +1,8 @@
 @model SportDetailsViewModel
 @{
     ViewData["Title"] = Model.Sport.Name;
-    bool isAdmin = User.IsInRole(Roles.Admin);
-    bool canSchedule = isAdmin || User.IsInRole(Roles.Coach);
+    bool canManage = UiHelpers.Can(User, Permissions.SportsManage);
+    bool canSchedule = UiHelpers.Can(User, Permissions.SchedulesManage);
 }
 
 <div class="page-head">
@@ -27,7 +27,7 @@
         {
             <a asp-controller="Schedules" asp-action="Create" asp-route-sportId="@Model.Sport.Id" class="btn btn-light-x"><i class="bi bi-calendar-plus me-1"></i>Add schedule</a>
         }
-        @if (isAdmin)
+        @if (canManage)
         {
             <a asp-action="Edit" asp-route-id="@Model.Sport.Id" class="btn btn-gold"><i class="bi bi-pencil me-1"></i>Edit sport</a>
         }

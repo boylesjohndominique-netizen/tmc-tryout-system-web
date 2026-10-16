@@ -113,4 +113,11 @@ public static class UiHelpers
         Roles.Evaluator => "clipboard-check-fill",
         _ => "mortarboard-fill"
     };
+
+    /// <summary>
+    /// View-side permission check. Administrators always pass; everyone else needs the granted claim.
+    /// Mirrors <c>AppController.HasPermission</c> so buttons match what the server enforces.
+    /// </summary>
+    public static bool Can(System.Security.Claims.ClaimsPrincipal user, string permission) =>
+        user.IsInRole(Roles.Admin) || user.HasClaim(Permissions.ClaimType, permission);
 }

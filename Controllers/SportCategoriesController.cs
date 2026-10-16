@@ -11,9 +11,10 @@ namespace TmcTryoutSystem.Controllers;
 
 /// <summary>
 /// Sport categories decide how a sport is evaluated: each category owns its own set of
-/// performance criteria. Only administrators manage them.
+/// performance criteria. Administrators manage them; staff need the sports.manage capability.
 /// </summary>
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Roles = Roles.Staff)]
+[Authorize(Policy = Permissions.SportsManage)]
 public class SportCategoriesController : AppController
 {
     private readonly IRealtimeNotifier _rt;

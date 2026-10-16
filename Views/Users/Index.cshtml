@@ -92,6 +92,7 @@
                         </td>
                         <td>
                             <div class="actions">
+                                <a asp-action="Permissions" asp-route-id="@u.Id" class="btn-action" title="Permissions"><i class="bi bi-shield-lock"></i></a>
                                 <a asp-action="Edit" asp-route-id="@u.Id" class="btn-action" title="Edit account"><i class="bi bi-pencil"></i></a>
                                 <a asp-action="ResetPassword" asp-route-id="@u.Id" class="btn-action" title="Reset password"><i class="bi bi-key"></i></a>
                                 <form asp-action="ToggleActive" asp-route-id="@u.Id" method="post" data-confirm="@(u.IsActive ? "Deactivate this account? The user will be signed out." : "Reactivate this account?")">

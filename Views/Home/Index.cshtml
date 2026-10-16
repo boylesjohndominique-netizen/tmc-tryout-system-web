@@ -5,7 +5,12 @@
     var first = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
     var max = Math.Max(1, Model.PerSport.Count == 0 ? 1 : Model.PerSport.Max(p => p.Count));
     bool isAdmin = User.IsInRole(Roles.Admin);
-    bool canDecide = isAdmin || User.IsInRole(Roles.Coach);
+    bool canManageApplicants = UiHelpers.Can(User, Permissions.ApplicantsManage);
+    bool canManageSchedules = UiHelpers.Can(User, Permissions.SchedulesManage);
+    bool canEvaluations = UiHelpers.Can(User, Permissions.EvaluationsView);
+    bool canScreening = UiHelpers.Can(User, Permissions.ScreeningView);
+    bool canSelection = UiHelpers.Can(User, Permissions.SelectionView);
+    bool canReports = UiHelpers.Can(User, Permissions.ReportsView);
 }
 
 <div class="page-head">
@@ -14,12 +19,15 @@
         <p>Here is where the tryouts stand today.</p>
     </div>
     <div class="page-actions">
-        @if (isAdmin)
+        @if (canManageApplicants)
         {
             <a asp-controller="Applicants" asp-action="Create" class="btn btn-light-x"><i class="bi bi-person-plus me-1"></i>Register applicant</a>
+        }
+        @if (canManageSchedules)
+        {
             <a asp-controller="Schedules" asp-action="Create" class="btn btn-gold"><i class="bi bi-calendar-plus me-1"></i>New schedule</a>
         }
-        else
+        else if (!canManageApplicants && canEvaluations)
         {
             <a asp-controller="Evaluations" asp-action="Index" class="btn btn-gold"><i class="bi bi-clipboard2-pulse me-1"></i>Evaluate applicants</a>
         }
@@ -144,12 +152,18 @@
         <div class="card-x">
             <div class="card-x-head"><h2><i class="bi bi-lightning-charge"></i>Quick links</h2></div>
             <div class="card-x-body d-grid gap-2">
-                <a asp-controller="Screening" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-bar-chart-steps me-2 text-primary"></i>Screening and ranking</a>
-                @if (canDecide)
+                @if (canScreening)
+                {
+                    <a asp-controller="Screening" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-bar-chart-steps me-2 text-primary"></i>Screening and ranking</a>
+                }
+                @if (canSelection)
                 {
                     <a asp-controller="Selection" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-patch-check me-2 text-primary"></i>Record final selections</a>
                 }
-                <a asp-controller="Reports" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Generate reports</a>
+                @if (canReports)
+                {
+                    <a asp-controller="Reports" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Generate reports</a>
+                }
                 @if (isAdmin)
                 {
                     <a asp-controller="Users" asp-action="Index" class="btn btn-light-x text-start"><i class="bi bi-person-gear me-2 text-primary"></i>Manage @Model.UserCount user accounts</a>

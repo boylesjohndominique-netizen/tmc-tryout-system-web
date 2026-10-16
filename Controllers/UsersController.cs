@@ -68,7 +68,7 @@ public class UsersController : AppController
 
         if (!ModelState.IsValid) return View(model);
 
-        Db.Users.Add(new AppUser
+        var created = new AppUser
         {
             Username = username,
             FullName = model.FullName.Trim(),
@@ -81,8 +81,18 @@ public class UsersController : AppController
             // verification steps, so these accounts are never held at the gate.
             EmailVerified = true,
             IdVerified = true
-        });
+        };
+        Db.Users.Add(created);
         await Db.SaveChangesAsync();
+
+        // Staff start from a sensible set of permissions so the account is usable immediately;
+        // the administrator can then fine-tune them on the Permissions screen.
+        if (created.Role != Roles.Admin)
+        {
+            foreach (var key in Models.Permissions.DefaultsFor(created.Role))
+                Db.UserPermissions.Add(new UserPermission { UserId = created.Id, Permission = key });
+            await Db.SaveChangesAsync();
+        }
 
         await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Dashboard);
         Success($"Account for {model.FullName.Trim()} was created.");
@@ -143,11 +153,23 @@ public class UsersController : AppController
 
         if (!ModelState.IsValid) return View(model);
 
+        bool roleChanged = user.Role != model.Role;
+
         // Staff assignments only make sense for coaches and evaluators.
-        if (user.Role != model.Role && model.Role != Roles.Coach && model.Role != Roles.Evaluator)
+        if (roleChanged && model.Role != Roles.Coach && model.Role != Roles.Evaluator)
         {
             var assignments = await Db.SportAssignments.Where(x => x.UserId == user.Id).ToListAsync();
             Db.SportAssignments.RemoveRange(assignments);
+        }
+
+        // A role change resets permissions to that role's defaults; fine-tuning is done on the Permissions screen.
+        if (roleChanged)
+        {
+            var permissions = await Db.UserPermissions.Where(p => p.UserId == user.Id).ToListAsync();
+            Db.UserPermissions.RemoveRange(permissions);
+            if (model.Role != Roles.Admin)
+                foreach (var key in Models.Permissions.DefaultsFor(model.Role))
+                    Db.UserPermissions.Add(new UserPermission { UserId = user.Id, Permission = key });
         }
 
         user.FullName = model.FullName.Trim();
@@ -218,6 +240,66 @@ public class UsersController : AppController
         await Db.SaveChangesAsync();
         await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Dashboard);
         Success(user.IsActive ? $"{user.FullName} can sign in again." : $"{user.FullName} was deactivated.");
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ---------- Permissions ----------
+    /// <summary>The Permissions screen where an administrator fine-tunes what a Coach/Evaluator may do.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Permissions(int id)
+    {
+        var user = await Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null || user.Role == Roles.Student) return NotFound();
+
+        return View(new PermissionFormViewModel
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Username = user.Username,
+            Role = user.Role,
+            IsAdmin = user.Role == Roles.Admin,
+            Granted = await Db.UserPermissions.AsNoTracking()
+                .Where(p => p.UserId == id)
+                .Select(p => p.Permission)
+                .ToListAsync()
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Permissions(int id, PermissionFormViewModel model)
+    {
+        if (id != model.Id) return BadRequest();
+        var user = await Db.Users.FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null || user.Role == Roles.Student) return NotFound();
+
+        model.FullName = user.FullName;
+        model.Username = user.Username;
+        model.Role = user.Role;
+        model.IsAdmin = user.Role == Roles.Admin;
+
+        // Administrators are superadmins; their full access is fixed and cannot be narrowed here.
+        if (model.IsAdmin) return RedirectToAction(nameof(Permissions), new { id });
+
+        var selected = (model.SelectedPermissions ?? new List<string>())
+            .Where(key => Models.Permissions.All.Contains(key))
+            .Distinct()
+            .ToList();
+
+        // A "Manage" grant always implies the matching "View" grant.
+        foreach (var area in Models.Permissions.Catalog)
+        {
+            if (area.ManageKey != null && selected.Contains(area.ManageKey) && !selected.Contains(area.ViewKey))
+                selected.Add(area.ViewKey);
+        }
+
+        var existing = await Db.UserPermissions.Where(p => p.UserId == id).ToListAsync();
+        Db.UserPermissions.RemoveRange(existing);
+        foreach (var key in selected)
+            Db.UserPermissions.Add(new UserPermission { UserId = id, Permission = key });
+        await Db.SaveChangesAsync();
+
+        await _rt.ChangedAsync(RealtimeScopes.Users);
+        Success($"Permissions for {user.FullName} were updated. They take effect on their next page load.");
         return RedirectToAction(nameof(Index));
     }
 

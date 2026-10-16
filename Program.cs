@@ -80,17 +80,26 @@ builder.Services
 
                 bool valid = false;
                 bool emailVerified = false, idVerified = false;
+                var permissions = new List<string>();
                 if (int.TryParse(idText, out var userId))
                 {
                     var user = await db.Users.AsNoTracking()
                         .Where(u => u.Id == userId)
-                        .Select(u => new { u.IsActive, u.Role, u.EmailVerified, u.IdVerified })
+                        .Select(u => new
+                        {
+                            u.IsActive,
+                            u.Role,
+                            u.EmailVerified,
+                            u.IdVerified,
+                            Granted = u.Permissions.Select(p => p.Permission).ToList()
+                        })
                         .FirstOrDefaultAsync();
                     valid = user != null && user.IsActive && user.Role == role;
                     if (user != null)
                     {
                         emailVerified = user.EmailVerified;
                         idVerified = user.IdVerified;
+                        permissions = user.Role == Roles.Admin ? Permissions.All.ToList() : user.Granted;
                     }
                 }
 
@@ -101,16 +110,30 @@ builder.Services
                     return;
                 }
 
-                // Keep the verification badges in the app shell accurate after an admin approves an account.
-                if (principal != null &&
+                // Keep the verification badges and the granted permissions in the app shell accurate
+                // after an administrator approves an account or changes what a staff member may do.
+                bool verificationChanged = principal != null &&
                     (principal.FindFirst(VerificationClaims.EmailVerified)?.Value != emailVerified.ToString() ||
-                     principal.FindFirst(VerificationClaims.IdVerified)?.Value != idVerified.ToString()))
+                     principal.FindFirst(VerificationClaims.IdVerified)?.Value != idVerified.ToString());
+
+                var currentPermissions = principal?.Claims
+                    .Where(c => c.Type == Permissions.ClaimType)
+                    .Select(c => c.Value)
+                    .OrderBy(v => v)
+                    .ToList() ?? new List<string>();
+                bool permissionsChanged = !currentPermissions.SequenceEqual(permissions.OrderBy(v => v));
+
+                if (principal != null && (verificationChanged || permissionsChanged))
                 {
                     var claims = principal.Claims
-                        .Where(c => c.Type != VerificationClaims.EmailVerified && c.Type != VerificationClaims.IdVerified)
+                        .Where(c => c.Type != VerificationClaims.EmailVerified
+                                    && c.Type != VerificationClaims.IdVerified
+                                    && c.Type != Permissions.ClaimType)
                         .ToList();
                     claims.Add(new Claim(VerificationClaims.EmailVerified, emailVerified.ToString()));
                     claims.Add(new Claim(VerificationClaims.IdVerified, idVerified.ToString()));
+                    foreach (var permission in permissions)
+                        claims.Add(new Claim(Permissions.ClaimType, permission));
                     var identity = new ClaimsIdentity(claims, principal.Identity?.AuthenticationType, ClaimTypes.Name, ClaimTypes.Role);
                     context.ReplacePrincipal(new ClaimsPrincipal(identity));
                     context.ShouldRenew = true;
@@ -120,9 +143,13 @@ builder.Services
     });
 
 // Every page requires a signed-in user unless it is marked [AllowAnonymous].
+// Each grantable capability is also registered as a policy so actions can require it directly.
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+
+    foreach (var permission in Permissions.All)
+        options.AddPolicy(permission, policy => policy.RequireClaim(Permissions.ClaimType, permission));
 });
 
 var app = builder.Build();

@@ -1,15 +1,15 @@
 @model SportListViewModel
 @{
     ViewData["Title"] = "Sports";
-    bool isAdmin = User.IsInRole(Roles.Admin);
+    bool canManage = UiHelpers.Can(User, Permissions.SportsManage);
 }
 
 <div class="page-head">
     <div>
         <h1>Sports</h1>
-        <p>@(isAdmin ? "Add sports, set qualifying scores and assign coaches or evaluators." : "The sports you are assigned to.")</p>
+        <p>@(canManage ? "Add sports, set qualifying scores and assign coaches or evaluators." : "The sports you are assigned to.")</p>
     </div>
-    @if (isAdmin)
+    @if (canManage)
     {
         <div class="page-actions"><a asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Add sport</a></div>
     }
@@ -20,9 +20,9 @@
     <div class="card-x">
         <div class="empty-state">
             <div class="icon-tile gold"><i class="bi bi-trophy"></i></div>
-            <h3>@(isAdmin ? "No sports yet" : "No sports assigned to you")</h3>
-            <p>@(isAdmin ? "Add the first sport so students can register for it." : "Ask an administrator to assign you to a sport.")</p>
-            @if (isAdmin) { <a asp-action="Create" class="btn btn-gold">Add a sport</a> }
+            <h3>@(canManage ? "No sports yet" : "No sports assigned to you")</h3>
+            <p>@(canManage ? "Add the first sport so students can register for it." : "Ask an administrator to assign you to a sport.")</p>
+            @if (canManage) { <a asp-action="Create" class="btn btn-gold">Add a sport</a> }
         </div>
     </div>
 }
@@ -46,7 +46,7 @@ else
                             @if (s.IsActive) { <span class="badge-soft badge-soft-success">Open for registration</span> }
                             else { <span class="badge-soft badge-soft-muted">Inactive</span> }
                         </div>
-                        @if (isAdmin)
+                        @if (canManage)
                         {
                             <div class="actions">
                                 <a asp-action="Edit" asp-route-id="@s.Id" class="btn-action" title="Edit"><i class="bi bi-pencil"></i></a>

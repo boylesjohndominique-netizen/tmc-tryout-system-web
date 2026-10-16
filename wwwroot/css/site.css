@@ -746,5 +746,16 @@ html.auth-html, body.auth-body {
 .verify-card { border: 1px solid var(--line); border-radius: 14px; padding: 1rem; background: #fff; }
 .verify-card:hover { border-color: #c7d4ee; }
 
+/* ---------- Permission editor ---------- */
+.perm-card { height: 100%; }
+.perm-head { display: flex; align-items: center; gap: .8rem; margin-bottom: .9rem; }
+.perm-head h3 { font-size: 1rem; font-weight: 700; margin: 0; }
+.perm-head .icon-tile { width: 42px; height: 42px; font-size: 1.15rem; }
+.perm-toggle { display: flex; align-items: flex-start; gap: .65rem; padding: .6rem .75rem; border: 1px solid var(--line); border-radius: 10px; margin-top: .5rem; cursor: pointer; transition: border-color .15s, background .15s; }
+.perm-toggle:hover { border-color: #b9c9ee; background: var(--blue-50); }
+.perm-toggle input { margin: .2rem 0 0; flex: none; }
+.perm-toggle strong { display: block; font-size: .9rem; }
+.perm-toggle small { display: block; color: var(--muted); font-size: .78rem; }
+
 /* Sidebar nudge while an account still needs verification. */
 .side-link-alert .side-label::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-left: .45rem; border-radius: 50%; background: var(--gold); vertical-align: middle; }

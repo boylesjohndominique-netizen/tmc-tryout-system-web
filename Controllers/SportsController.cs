@@ -19,6 +19,7 @@ public class SportsController : AppController
         _rt = rt;
     }
 
+    [Authorize(Policy = Permissions.SportsView)]
     public async Task<IActionResult> Index()
     {
         var allowed = await AllowedSportIdsAsync();
@@ -48,6 +49,7 @@ public class SportsController : AppController
         });
     }
 
+    [Authorize(Policy = Permissions.SportsView)]
     public async Task<IActionResult> Details(int id)
     {
         var allowed = await AllowedSportIdsAsync();
@@ -75,7 +77,7 @@ public class SportsController : AppController
     }
 
     // ---------- Create ----------
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.SportsManage)]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -84,7 +86,7 @@ public class SportsController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.SportsManage)]
     [HttpPost]
     public async Task<IActionResult> Create(SportFormViewModel model)
     {
@@ -109,7 +111,7 @@ public class SportsController : AppController
     }
 
     // ---------- Edit ----------
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.SportsManage)]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -132,7 +134,7 @@ public class SportsController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.SportsManage)]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, SportFormViewModel model)
     {
@@ -157,7 +159,7 @@ public class SportsController : AppController
     }
 
     // ---------- Delete ----------
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.SportsManage)]
     [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {

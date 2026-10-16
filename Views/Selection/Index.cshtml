@@ -1,5 +1,8 @@
 @model SelectionListViewModel
-@{ ViewData["Title"] = "Selection"; }
+@{
+    ViewData["Title"] = "Selection";
+    bool canDecide = UiHelpers.Can(User, Permissions.SelectionManage);
+}
 
 <div class="page-head">
     <div>
@@ -42,9 +45,12 @@
             <i class="bi bi-lightbulb"></i>
             <div>
                 @(Model.SelectedPerSport.TryGetValue(sport.Id, out var sel) ? sel : 0) selected@(sport.Slots.HasValue ? " of " + sport.Slots + " slots" : "") for @sport.Name.
-                <form asp-action="SelectQualified" asp-route-sportId="@sport.Id" method="post" class="d-inline" data-confirm="Mark all pending qualified applicants for @sport.Name as Selected?">
-                    <button type="submit" class="btn btn-sm btn-gold ms-2"><i class="bi bi-magic me-1"></i>Auto-select qualified</button>
-                </form>
+                @if (canDecide)
+                {
+                    <form asp-action="SelectQualified" asp-route-sportId="@sport.Id" method="post" class="d-inline" data-confirm="Mark all pending qualified applicants for @sport.Name as Selected?">
+                        <button type="submit" class="btn btn-sm btn-gold ms-2"><i class="bi bi-magic me-1"></i>Auto-select qualified</button>
+                    </form>
+                }
             </div>
         </div>
     }
@@ -79,11 +85,18 @@
                         </td>
                         <td><partial name="_StatusBadge" model="a.Status" /></td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-light-x" data-bs-toggle="modal" data-bs-target="#decideModal"
-                                    data-id="@a.Id" data-name="@a.DisplayName" data-sub="@(a.Sport?.Name) &middot; @a.StudentId"
-                                    data-status="@a.Status" data-remarks="@a.StatusRemarks">
-                                <i class="bi bi-flag me-1"></i>Decide
-                            </button>
+                            @if (canDecide)
+                            {
+                                <button type="button" class="btn btn-sm btn-light-x" data-bs-toggle="modal" data-bs-target="#decideModal"
+                                        data-id="@a.Id" data-name="@a.DisplayName" data-sub="@(a.Sport?.Name) &middot; @a.StudentId"
+                                        data-status="@a.Status" data-remarks="@a.StatusRemarks">
+                                    <i class="bi bi-flag me-1"></i>Decide
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">View only</span>
+                            }
                         </td>
                     </tr>
                 }

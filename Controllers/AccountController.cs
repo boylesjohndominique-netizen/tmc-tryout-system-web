@@ -545,6 +545,14 @@ public class AccountController : AppController
 
     private async Task SignInAsync(AppUser user, bool remember)
     {
+        // Administrators are superadmins: they always carry every capability.
+        List<string> permissions = user.Role == Roles.Admin
+            ? Permissions.All.ToList()
+            : await Db.UserPermissions.AsNoTracking()
+                .Where(p => p.UserId == user.Id)
+                .Select(p => p.Permission)
+                .ToListAsync();
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -555,6 +563,9 @@ public class AccountController : AppController
             new(VerificationClaims.IdVerified, user.IdVerified.ToString()),
             new(ProfileClaims.Picture, user.ProfilePicturePath ?? string.Empty)
         };
+        foreach (var permission in permissions)
+            claims.Add(new Claim(Permissions.ClaimType, permission));
+
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var properties = new AuthenticationProperties
         {

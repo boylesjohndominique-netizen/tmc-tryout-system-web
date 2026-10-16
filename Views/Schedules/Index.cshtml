@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Tryout schedules";
     bool isStudent = User.IsInRole(Roles.Student);
-    bool canSchedule = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Coach);
+    bool canSchedule = UiHelpers.Can(User, Permissions.SchedulesManage);
 }
 
 <div class="page-head">

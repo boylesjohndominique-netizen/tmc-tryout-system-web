@@ -1,0 +1,96 @@
+@model PermissionFormViewModel
+@{ ViewData["Title"] = "Permissions"; }
+
+<div class="page-head">
+    <div>
+        <h1>Permissions</h1>
+        <p>Choose what <strong>@Model.FullName</strong> can access, control and view.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-light-x"><i class="bi bi-arrow-left me-1"></i>Back to accounts</a>
+    </div>
+</div>
+
+@if (Model.IsAdmin)
+{
+    <div class="card-x">
+        <div class="empty-state">
+            <div class="icon-tile gold"><i class="bi bi-shield-lock"></i></div>
+            <h3>Full access</h3>
+            <p>@Model.FullName is an <strong>@Model.Role</strong>. Administrators are superadmins and always have every permission, so there is nothing to configure here.</p>
+            <a asp-action="Index" class="btn btn-primary mt-2"><i class="bi bi-arrow-left me-1"></i>Back to accounts</a>
+        </div>
+    </div>
+}
+else
+{
+    <form asp-action="Permissions" asp-route-id="@Model.Id" method="post" data-once>
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+
+        <div class="card-x mb-4">
+            <div class="card-x-body d-flex align-items-center gap-3 flex-wrap">
+                <span class="icon-tile"><i class="bi bi-@UiHelpers.RoleIcon(Model.Role)"></i></span>
+                <div class="flex-grow-1">
+                    <strong class="d-block">@Model.FullName</strong>
+                    <span class="text-muted small">@Model.Username &middot; @Model.Role</span>
+                </div>
+                <span class="badge-soft badge-soft-info">@Model.Granted.Count of @Permissions.All.Length granted</span>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var area in Permissions.Catalog)
+            {
+                <div class="col-lg-6">
+                    <div class="card-x perm-card h-100">
+                        <div class="card-x-body">
+                            <div class="perm-head">
+                                <span class="icon-tile"><i class="bi bi-@area.Icon"></i></span>
+                                <h3>@area.Name</h3>
+                            </div>
+
+                            <label class="perm-toggle">
+                                <input class="form-check-input" type="checkbox" name="SelectedPermissions"
+                                       value="@area.ViewKey" data-perm-view="@area.ViewKey"
+                                       checked="@Model.Granted.Contains(area.ViewKey)" />
+                                <span><strong>View</strong><small>See this area across the system.</small></span>
+                            </label>
+
+                            @if (area.ManageKey != null)
+                            {
+                                <label class="perm-toggle">
+                                    <input class="form-check-input" type="checkbox" name="SelectedPermissions"
+                                           value="@area.ManageKey" data-perm-manage="@area.ViewKey"
+                                           checked="@Model.Granted.Contains(area.ManageKey)" />
+                                    <span><strong>Manage</strong><small>@area.ManageLabel</small></span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card-x mt-4">
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Save permissions</button>
+                <a asp-action="Index" class="btn btn-light-x">Cancel</a>
+            </div>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            // Ticking Manage auto-ticks View; clearing View clears Manage, so the pair stays consistent.
+            document.querySelectorAll('[data-perm-manage]').forEach(function (manage) {
+                var view = document.querySelector('[data-perm-view="' + manage.dataset.permManage + '"]');
+                if (!view) return;
+                manage.addEventListener('change', function () { if (manage.checked) view.checked = true; });
+                view.addEventListener('change', function () { if (!view.checked) manage.checked = false; });
+            });
+        })();
+    </script>
+}

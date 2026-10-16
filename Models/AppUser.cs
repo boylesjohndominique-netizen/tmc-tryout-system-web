@@ -91,6 +91,9 @@ public class AppUser
     public ICollection<SportAssignment> SportAssignments { get; set; } = new List<SportAssignment>();
     public ICollection<Applicant> Registrations { get; set; } = new List<Applicant>();
 
+    /// <summary>Capabilities granted by an administrator. Only meaningful for Coach/Evaluator accounts.</summary>
+    public ICollection<UserPermission> Permissions { get; set; } = new List<UserPermission>();
+
     /// <summary>True once the email OTP and the admin ID check have both passed.</summary>
     public bool IsFullyVerified => EmailVerified && IdVerified;
 

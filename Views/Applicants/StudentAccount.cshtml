@@ -2,7 +2,7 @@
 @{
     var s = Model.Student;
     ViewData["Title"] = s.DisplayName;
-    bool isAdmin = User.IsInRole(Roles.Admin);
+    bool canManage = UiHelpers.Can(User, Permissions.ApplicantsManage);
 }
 
 <div class="page-head">
@@ -34,7 +34,7 @@
             </div>
         </div>
     </div>
-    @if (isAdmin)
+    @if (canManage)
     {
         <div class="page-actions">
             <form asp-action="ToggleStudentActive" asp-route-id="@s.Id" method="post" data-confirm="@(s.IsActive ? "Deactivate this student account? They will not be able to sign in." : "Reactivate this student account?")">
@@ -157,7 +157,7 @@
                     <div class="text-muted small mb-2"><i class="bi bi-chat-left-text me-1"></i>@s.VerificationRemarks</div>
                 }
 
-                @if (Model.CanVerify)
+                @if (Model.CanVerify && canManage)
                 {
                     <form asp-action="VerifyAccount" method="post" class="d-flex flex-column gap-2" data-once>
                         <input type="hidden" name="id" value="@s.Id" />

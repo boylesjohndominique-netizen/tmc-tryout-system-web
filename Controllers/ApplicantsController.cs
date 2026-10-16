@@ -27,6 +27,7 @@ public class ApplicantsController : AppController
     /// sign up — before the student is allowed to submit a tryout entry. Staff accounts are not
     /// listed here; they live on the Users page.
     /// </summary>
+    [Authorize(Policy = Permissions.ApplicantsView)]
     public async Task<IActionResult> Index(string? search, string? verification, string? course)
     {
         var students = Db.Users.AsNoTracking().Where(u => u.Role == Roles.Student);
@@ -81,6 +82,7 @@ public class ApplicantsController : AppController
     }
 
     /// <summary>A single student account: identity, ID photos for approval and their tryout entries.</summary>
+    [Authorize(Policy = Permissions.ApplicantsView)]
     public async Task<IActionResult> StudentAccount(int id)
     {
         var student = await Db.Users.AsNoTracking()
@@ -105,6 +107,7 @@ public class ApplicantsController : AppController
     }
 
     /// <summary>Staff confirm or reject the student ID photos uploaded at sign-up.</summary>
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> VerifyAccount(int id, bool approved, string? remarks)
     {
@@ -140,7 +143,7 @@ public class ApplicantsController : AppController
     /// Deactivate or reactivate a student account. Student accounts are no longer on the Users
     /// page, so this is where an administrator blocks (or restores) a student's access.
     /// </summary>
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> ToggleStudentActive(int id)
     {
@@ -158,6 +161,7 @@ public class ApplicantsController : AppController
     }
 
     // ---------- Details ----------
+    [Authorize(Policy = Permissions.ApplicantsView)]
     public async Task<IActionResult> Details(int id)
     {
         var applicant = await Db.Applicants
@@ -178,14 +182,14 @@ public class ApplicantsController : AppController
             Applicant = applicant,
             Evaluations = applicant.Evaluations.OrderByDescending(e => e.EvaluatedAt).ToList(),
             MyEvaluationId = applicant.Evaluations.FirstOrDefault(e => e.EvaluatorId == myId)?.Id,
-            CanDecide = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Coach),
+            CanDecide = HasPermission(Permissions.SelectionManage),
             CanEvaluate = true,
-            CanManage = IsAdmin
+            CanManage = HasPermission(Permissions.ApplicantsManage)
         });
     }
 
     // ---------- Admin: register on behalf of a student ----------
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -194,7 +198,7 @@ public class ApplicantsController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> Create(ApplicantFormViewModel model)
     {
@@ -228,7 +232,7 @@ public class ApplicantsController : AppController
         return RedirectToAction(nameof(Details), new { id = applicant.Id });
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -241,7 +245,7 @@ public class ApplicantsController : AppController
         return View(model);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, ApplicantFormViewModel model)
     {
@@ -277,7 +281,7 @@ public class ApplicantsController : AppController
     }
 
     /// <summary>Admin confirms or rejects the uploaded ID pictures of a student.</summary>
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> Verify(int id, bool approved, string? remarks)
     {
@@ -322,7 +326,7 @@ public class ApplicantsController : AppController
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Policy = Permissions.ApplicantsManage)]
     [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {

@@ -1,5 +1,8 @@
 @model EvaluationListViewModel
-@{ ViewData["Title"] = "Evaluations"; }
+@{
+    ViewData["Title"] = "Evaluations";
+    bool canManage = UiHelpers.Can(User, Permissions.EvaluationsManage);
+}
 
 <div class="page-head">
     <div>
@@ -46,9 +49,16 @@
                         <td>@a.EvaluationCount</td>
                         <td>@(a.OverallScore.HasValue ? a.OverallScore.Value.ToString("0.0") : "-")</td>
                         <td>
-                            <a asp-action="Evaluate" asp-route-id="@a.Id" class="btn btn-sm @(mine ? "btn-light-x" : "btn-gold")">
-                                <i class="bi bi-@(mine ? "pencil" : "clipboard2-pulse") me-1"></i>@(mine ? "Edit my score" : "Evaluate")
-                            </a>
+                            @if (canManage)
+                            {
+                                <a asp-action="Evaluate" asp-route-id="@a.Id" class="btn btn-sm @(mine ? "btn-light-x" : "btn-gold")">
+                                    <i class="bi bi-@(mine ? "pencil" : "clipboard2-pulse") me-1"></i>@(mine ? "Edit my score" : "Evaluate")
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">View only</span>
+                            }
                         </td>
                     </tr>
                 }

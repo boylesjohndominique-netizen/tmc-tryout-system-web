@@ -20,6 +20,13 @@ public abstract class AppController : Controller
 
     protected bool IsAdmin => User.IsInRole(Roles.Admin);
 
+    /// <summary>
+    /// True when the signed-in user holds a granted capability. Administrators are superadmins and
+    /// always pass, so permission checks never need to special-case the Admin role.
+    /// </summary>
+    protected bool HasPermission(string permission) =>
+        IsAdmin || User.HasClaim(Permissions.ClaimType, permission);
+
     /// <summary>Sport ids the signed-in user may work with. Null means all sports (Admin).</summary>
     protected async Task<List<int>?> AllowedSportIdsAsync()
     {

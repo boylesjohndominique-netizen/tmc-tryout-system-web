@@ -506,6 +506,30 @@ namespace TmcTryoutSystem.Migrations
                     b.ToTable("Schedules");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.UserPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Permission")
+                        .IsUnique();
+
+                    b.ToTable("UserPermissions");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.Applicant", b =>
                 {
                     b.HasOne("TmcTryoutSystem.Models.Sport", "Sport")
@@ -626,8 +650,21 @@ namespace TmcTryoutSystem.Migrations
                     b.Navigation("Sport");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.UserPermission", b =>
+                {
+                    b.HasOne("TmcTryoutSystem.Models.AppUser", "User")
+                        .WithMany("Permissions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.AppUser", b =>
                 {
+                    b.Navigation("Permissions");
+
                     b.Navigation("Registrations");
 
                     b.Navigation("SportAssignments");

@@ -1,7 +1,7 @@
 @model TryoutSchedule
 @{
     ViewData["Title"] = Model.Title;
-    bool canSchedule = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Coach);
+    bool canSchedule = UiHelpers.Can(User, Permissions.SchedulesManage);
 }
 
 <div class="page-head">
