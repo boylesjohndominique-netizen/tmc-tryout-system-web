@@ -541,8 +541,11 @@ a { text-decoration: none; }
 html.auth-html, body.auth-body {
     height: auto;
     min-height: 100%;
-    overflow-y: auto;
     background: var(--white);
+    /* No overflow here on purpose: scrolling belongs to the document/viewport.
+       An `overflow-y: auto` on <body> turns it into a scroll container that
+       never scrolls (its height equals its content), which anchors the sticky
+       .auth-hero to the body instead of the viewport so it scrolls away. */
 }
 .auth-shell { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-height: 100vh; }
 .auth-hero { background: linear-gradient(160deg, var(--navy) 0%, var(--navy-800) 60%, #14408f 100%); color: #fff; position: relative; overflow: hidden; display: flex; }
