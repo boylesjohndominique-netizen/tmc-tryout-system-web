@@ -28,6 +28,13 @@ public class UserFormViewModel
     [Required(ErrorMessage = "Choose a role.")]
     public string Role { get; set; } = Roles.Coach;
 
+    /// <summary>
+    /// The course a coach or evaluator is tied to. Required for those roles (enforced in the
+    /// controller) and blank for admins, so it cannot use an unconditional [Required] here.
+    /// </summary>
+    [Display(Name = "Course")]
+    public string? CourseOrGrade { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     [DataType(DataType.Password)]
@@ -113,6 +120,14 @@ public class ScheduleFormViewModel : IValidatableObject
     [Display(Name = "Sport")]
     public int? SportId { get; set; }
 
+    /// <summary>The course this tryout is for. Coaches/evaluators are locked to their own course.</summary>
+    [Required(ErrorMessage = "Choose the course this tryout is for.")]
+    [Display(Name = "Course")]
+    public string? CourseOrGrade { get; set; }
+
+    /// <summary>True when the signed-in staff member's course is fixed and cannot be changed here.</summary>
+    public bool CourseLocked { get; set; }
+
     [Required(ErrorMessage = "Enter a title for the tryout."), StringLength(120)]
     public string Title { get; set; } = string.Empty;
 
@@ -137,6 +152,7 @@ public class ScheduleFormViewModel : IValidatableObject
     public bool IsCancelled { get; set; }
 
     public List<Sport> Sports { get; set; } = new();
+    public List<string> Courses { get; set; } = new();
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

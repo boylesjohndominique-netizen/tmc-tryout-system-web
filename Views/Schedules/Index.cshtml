@@ -54,7 +54,7 @@
                 <div class="date-tile @(t.Status == ScheduleStatus.Completed ? "past" : "")"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
                 <div class="grow">
                     <strong>@t.Title</strong>
-                    <small><i class="bi bi-@(t.Sport?.Icon ?? "trophy") me-1"></i>@t.Sport?.Name &middot; @t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; <i class="bi bi-geo-alt"></i> @t.Venue</small>
+                    <small><i class="bi bi-@(t.Sport?.Icon ?? "trophy") me-1"></i>@t.Sport?.Name &middot; <i class="bi bi-mortarboard me-1"></i>@UiHelpers.CourseShort(t.CourseOrGrade) &middot; @t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; <i class="bi bi-geo-alt"></i> @t.Venue</small>
                 </div>
                 <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
                 @if (!isStudent)

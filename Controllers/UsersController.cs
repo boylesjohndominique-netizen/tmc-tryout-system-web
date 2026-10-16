@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TmcTryoutSystem.Data;
+using TmcTryoutSystem.Helpers;
 using TmcTryoutSystem.Models;
 using TmcTryoutSystem.Services;
 using TmcTryoutSystem.ViewModels;
@@ -52,6 +53,8 @@ public class UsersController : AppController
         if (!Roles.StaffRoles.Contains(model.Role))
             ModelState.AddModelError(nameof(model.Role), "Choose a valid staff role. Students create their own accounts.");
 
+        ValidateCourse(model);
+
         if (string.IsNullOrEmpty(model.Password))
             ModelState.AddModelError(nameof(model.Password), "Enter a password for the new account.");
         else
@@ -71,6 +74,7 @@ public class UsersController : AppController
             FullName = model.FullName.Trim(),
             Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
             Role = model.Role,
+            CourseOrGrade = NeedsCourse(model.Role) ? model.CourseOrGrade!.Trim() : null,
             IsActive = model.IsActive,
             PasswordHash = PasswordService.Hash(model.Password!),
             // An administrator creating the account in person stands in for both
@@ -98,6 +102,7 @@ public class UsersController : AppController
             FullName = user.FullName,
             Email = user.Email,
             Role = user.Role,
+            CourseOrGrade = user.CourseOrGrade,
             IsActive = user.IsActive
         });
     }
@@ -127,6 +132,8 @@ public class UsersController : AppController
             model.IsActive = true;
         }
 
+        ValidateCourse(model);
+
         if (user.Role == Roles.Admin && (model.Role != Roles.Admin || !model.IsActive))
         {
             var otherAdmins = await Db.Users.CountAsync(u => u.Role == Roles.Admin && u.IsActive && u.Id != user.Id);
@@ -146,6 +153,7 @@ public class UsersController : AppController
         user.FullName = model.FullName.Trim();
         user.Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim();
         user.Role = model.Role;
+        user.CourseOrGrade = NeedsCourse(model.Role) ? model.CourseOrGrade!.Trim() : null;
         user.IsActive = model.IsActive;
         await Db.SaveChangesAsync();
         await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Dashboard);
@@ -211,6 +219,20 @@ public class UsersController : AppController
         await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Dashboard);
         Success(user.IsActive ? $"{user.FullName} can sign in again." : $"{user.FullName} was deactivated.");
         return RedirectToAction(nameof(Index));
+    }
+
+    // Coaches and evaluators work within a single course, so the course is required for them.
+    private static bool NeedsCourse(string role) =>
+        role == Roles.Coach || role == Roles.Evaluator;
+
+    private void ValidateCourse(UserFormViewModel model)
+    {
+        if (!NeedsCourse(model.Role)) return;
+
+        if (string.IsNullOrWhiteSpace(model.CourseOrGrade))
+            ModelState.AddModelError(nameof(model.CourseOrGrade), "Choose the course this account handles.");
+        else if (!UiHelpers.Courses.Contains(model.CourseOrGrade.Trim()))
+            ModelState.AddModelError(nameof(model.CourseOrGrade), "Choose a course from the list.");
     }
 
     [HttpPost]

@@ -42,7 +42,7 @@
     {
         <div class="table-responsive-x">
             <table class="table table-x">
-                <thead><tr><th>User</th><th>Role</th><th>Assigned sports</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th>User</th><th>Role</th><th>Course</th><th>Assigned sports</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
                 <tbody>
                 @foreach (var u in Model.Users)
                 {
@@ -55,6 +55,16 @@
                             </div>
                         </td>
                         <td><span class="badge-soft badge-soft-info"><i class="bi bi-@UiHelpers.RoleIcon(u.Role)"></i>@u.Role</span></td>
+                        <td>
+                            @if (u.Role == Roles.Coach || u.Role == Roles.Evaluator)
+                            {
+                                <span class="badge-soft badge-soft-muted">@UiHelpers.CourseShort(u.CourseOrGrade)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
                         <td>
                             @if (u.Role == Roles.Coach || u.Role == Roles.Evaluator)
                             {

@@ -3,7 +3,7 @@
     <h3><i class="bi bi-calendar-event"></i>Tryout details</h3>
     <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
     <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label asp-for="SportId" class="form-label"></label>
             <select asp-for="SportId" class="form-select">
                 <option value="">Select a sport</option>
@@ -14,7 +14,28 @@
             </select>
             <span asp-validation-for="SportId" class="text-danger"></span>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+            <label asp-for="CourseOrGrade" class="form-label"></label>
+            @if (Model.CourseLocked)
+            {
+                <input class="form-control" value="@UiHelpers.CourseShort(Model.CourseOrGrade)" disabled />
+                <input type="hidden" asp-for="CourseOrGrade" />
+                <div class="form-text">Only your own course can be scheduled.</div>
+            }
+            else
+            {
+                <select asp-for="CourseOrGrade" class="form-select">
+                    <option value="">Select the course</option>
+                    @foreach (var c in Model.Courses)
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+                <div class="form-text">Students only see the tryouts for their own course.</div>
+            }
+            <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
             <label asp-for="Title" class="form-label"></label>
             <input asp-for="Title" class="form-control" placeholder="e.g. Basketball Tryouts - Round 1" />
             <span asp-validation-for="Title" class="text-danger"></span>

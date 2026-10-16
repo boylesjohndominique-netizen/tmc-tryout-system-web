@@ -8,7 +8,7 @@
     <div>
         <div class="crumbs"><a asp-action="Index">Schedules</a> / @Model.Title</div>
         <h1>@Model.Title</h1>
-        <p><i class="bi bi-@(Model.Sport?.Icon ?? "trophy") me-1"></i>@Model.Sport?.Name &middot; @Model.StartAt.ToString("dddd, MMMM d, yyyy") &middot; @Model.StartAt.ToString("h:mm tt") - @Model.EndAt.ToString("h:mm tt") &middot; @Model.Venue</p>
+        <p><i class="bi bi-@(Model.Sport?.Icon ?? "trophy") me-1"></i>@Model.Sport?.Name &middot; <i class="bi bi-mortarboard me-1"></i>@UiHelpers.CourseShort(Model.CourseOrGrade) &middot; @Model.StartAt.ToString("dddd, MMMM d, yyyy") &middot; @Model.StartAt.ToString("h:mm tt") - @Model.EndAt.ToString("h:mm tt") &middot; @Model.Venue</p>
     </div>
     <div class="page-actions">
         <span class="badge-soft @UiHelpers.ScheduleBadge(Model.Status)" style="align-self:center">@Model.Status</span>

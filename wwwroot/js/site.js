@@ -6,9 +6,14 @@
     // ------------------------------------------------------------------
     document.addEventListener('submit', function (e) {
         var form = e.target;
-        if (form && form.getAttribute && form.getAttribute('data-confirm')) {
-            if (!window.confirm(form.getAttribute('data-confirm'))) e.preventDefault();
-        }
+        if (!form || !form.getAttribute) return;
+        // The clicked button may carry its own message, so forms with two outcomes
+        // (for example Approve and Reject) can ask the right question. Falls back to
+        // the form's own data-confirm.
+        var trigger = e.submitter;
+        var message = (trigger && trigger.getAttribute && trigger.getAttribute('data-confirm'))
+            || form.getAttribute('data-confirm');
+        if (message && !window.confirm(message)) e.preventDefault();
     });
 
     // ------------------------------------------------------------------
@@ -63,6 +68,18 @@
             };
             sportSelect.addEventListener('change', refresh);
             refresh();
+        }
+
+        // Show the course picker only for the roles that are tied to a course
+        var roleSelect = document.querySelector('[data-role-select]');
+        var courseField = document.querySelector('[data-course-field]');
+        if (roleSelect && courseField) {
+            var syncCourse = function () {
+                var needs = roleSelect.value === 'Coach' || roleSelect.value === 'Evaluator';
+                courseField.style.display = needs ? '' : 'none';
+            };
+            roleSelect.addEventListener('change', syncCourse);
+            syncCourse();
         }
 
         // Live overall score on the evaluation form

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using TmcTryoutSystem.Data;
 using TmcTryoutSystem.Helpers;
@@ -24,11 +25,17 @@ public class SchedulesController : AppController
         bool isStudent = User.IsInRole(Roles.Student);
         var allowed = isStudent ? null : await AllowedSportIdsAsync();
 
+        // A student only sees tryouts for their own course; course-scoped staff are limited the same way.
+        var course = await CurrentUserCourseAsync();
+
         var all = await Db.Schedules
             .ScopeTo(allowed)
             .Include(t => t.Sport)
             .AsNoTracking()
             .ToListAsync();
+
+        if (!string.IsNullOrWhiteSpace(course))
+            all = all.Where(t => MatchesCourse(t.CourseOrGrade, course)).ToList();
 
         if (isStudent)
         {
@@ -83,6 +90,7 @@ public class SchedulesController : AppController
 
         var allowed = await AllowedSportIdsAsync();
         if (!CanAccessSport(allowed, schedule.SportId)) return Forbid();
+        if (!MatchesCourse(schedule.CourseOrGrade, await CurrentUserCourseAsync())) return Forbid();
 
         return View(schedule);
     }
@@ -100,6 +108,7 @@ public class SchedulesController : AppController
             EndTime = new TimeSpan(12, 0, 0)
         };
         await LoadSportsAsync(model);
+        LockCourseToStaff(model, await CurrentUserCourseAsync());
         return View(model);
     }
 
@@ -108,12 +117,15 @@ public class SchedulesController : AppController
     public async Task<IActionResult> Create(ScheduleFormViewModel model)
     {
         var allowed = await AllowedSportIdsAsync();
+        var staffCourse = await CurrentUserCourseAsync();
         if (model.SportId.HasValue && !CanAccessSport(allowed, model.SportId.Value))
             ModelState.AddModelError(nameof(model.SportId), "You can only schedule tryouts for your assigned sports.");
+        ValidateCourse(model, staffCourse, ModelState);
 
         if (!ModelState.IsValid)
         {
             await LoadSportsAsync(model);
+            LockCourseToStaff(model, staffCourse);
             return View(model);
         }
 
@@ -136,12 +148,15 @@ public class SchedulesController : AppController
         if (schedule == null) return NotFound();
 
         var allowed = await AllowedSportIdsAsync();
+        var staffCourse = await CurrentUserCourseAsync();
         if (!CanAccessSport(allowed, schedule.SportId)) return Forbid();
+        if (!MatchesCourse(schedule.CourseOrGrade, staffCourse)) return Forbid();
 
         var model = new ScheduleFormViewModel
         {
             Id = schedule.Id,
             SportId = schedule.SportId,
+            CourseOrGrade = schedule.CourseOrGrade,
             Title = schedule.Title,
             Date = schedule.StartAt.Date,
             StartTime = schedule.StartAt.TimeOfDay,
@@ -151,6 +166,7 @@ public class SchedulesController : AppController
             IsCancelled = schedule.IsCancelled
         };
         await LoadSportsAsync(model);
+        LockCourseToStaff(model, staffCourse);
         return View(model);
     }
 
@@ -163,9 +179,12 @@ public class SchedulesController : AppController
         if (schedule == null) return NotFound();
 
         var allowed = await AllowedSportIdsAsync();
+        var staffCourse = await CurrentUserCourseAsync();
         if (!CanAccessSport(allowed, schedule.SportId)) return Forbid();
+        if (!MatchesCourse(schedule.CourseOrGrade, staffCourse)) return Forbid();
         if (model.SportId.HasValue && !CanAccessSport(allowed, model.SportId.Value))
             ModelState.AddModelError(nameof(model.SportId), "You can only schedule tryouts for your assigned sports.");
+        ValidateCourse(model, staffCourse, ModelState);
 
         // Moving a schedule to another sport would strand applicants who registered for the old sport.
         if (model.SportId.HasValue && model.SportId.Value != schedule.SportId
@@ -174,9 +193,18 @@ public class SchedulesController : AppController
             ModelState.AddModelError(nameof(model.SportId), "Applicants are already assigned to this schedule, so its sport cannot change.");
         }
 
+        // Changing the course would leave applicants from the old course on the schedule.
+        if (!string.IsNullOrWhiteSpace(model.CourseOrGrade)
+            && !string.Equals(model.CourseOrGrade.Trim(), schedule.CourseOrGrade, StringComparison.OrdinalIgnoreCase)
+            && await Db.Applicants.AnyAsync(a => a.TryoutScheduleId == schedule.Id))
+        {
+            ModelState.AddModelError(nameof(model.CourseOrGrade), "Applicants are already assigned to this schedule, so its course cannot change.");
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadSportsAsync(model);
+            LockCourseToStaff(model, staffCourse);
             return View(model);
         }
 
@@ -198,6 +226,7 @@ public class SchedulesController : AppController
 
         var allowed = await AllowedSportIdsAsync();
         if (!CanAccessSport(allowed, schedule.SportId)) return Forbid();
+        if (!MatchesCourse(schedule.CourseOrGrade, await CurrentUserCourseAsync())) return Forbid();
 
         // Registered applicants keep their registration; they just lose the schedule link.
         var linked = await Db.Applicants.Where(a => a.TryoutScheduleId == id).ToListAsync();
@@ -221,12 +250,39 @@ public class SchedulesController : AppController
             .Where(s => s.IsActive || s.Id == model.SportId)
             .OrderBy(s => s.Name)
             .ToListAsync();
+        model.Courses = UiHelpers.Courses.ToList();
+    }
+
+    /// <summary>A coach can only schedule tryouts for their own course, so the picker is fixed for them.</summary>
+    private static void LockCourseToStaff(ScheduleFormViewModel model, string? staffCourse)
+    {
+        if (string.IsNullOrWhiteSpace(staffCourse)) return;
+        model.CourseOrGrade = staffCourse;
+        model.CourseLocked = true;
+    }
+
+    private static void ValidateCourse(ScheduleFormViewModel model, string? staffCourse, ModelStateDictionary state)
+    {
+        // Course-scoped staff always schedule for their own course, whatever the form posted.
+        if (!string.IsNullOrWhiteSpace(staffCourse))
+        {
+            model.CourseOrGrade = staffCourse;
+            state.Remove(nameof(model.CourseOrGrade));
+            return;
+        }
+
+        var course = (model.CourseOrGrade ?? string.Empty).Trim();
+        if (course.Length > 0 && !UiHelpers.Courses.Contains(course))
+            state.AddModelError(nameof(model.CourseOrGrade), "Choose a course from the list.");
+        else if (course.Length > 0)
+            model.CourseOrGrade = course;
     }
 
     private static void Apply(TryoutSchedule schedule, ScheduleFormViewModel model)
     {
         var date = model.Date!.Value.Date;
         schedule.SportId = model.SportId!.Value;
+        schedule.CourseOrGrade = string.IsNullOrWhiteSpace(model.CourseOrGrade) ? null : model.CourseOrGrade.Trim();
         schedule.Title = model.Title.Trim();
         schedule.StartAt = date.Add(model.StartTime!.Value);
         schedule.EndAt = date.Add(model.EndTime!.Value);

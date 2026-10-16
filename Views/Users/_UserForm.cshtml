@@ -30,7 +30,7 @@
         </div>
         <div class="col-md-6">
             <label asp-for="Role" class="form-label"></label>
-            <select asp-for="Role" class="form-select">
+            <select asp-for="Role" class="form-select" data-role-select>
                 @foreach (var r in Roles.StaffRoles)
                 {
                     <option value="@r">@r</option>
@@ -38,6 +38,18 @@
             </select>
             <div class="form-text">Staff accounts only. Coaches and evaluators are assigned to sports from the Sports page. Students create their own accounts.</div>
             <span asp-validation-for="Role" class="text-danger"></span>
+        </div>
+        <div class="col-md-6" data-course-field>
+            <label asp-for="CourseOrGrade" class="form-label"></label>
+            <select asp-for="CourseOrGrade" class="form-select">
+                <option value="">Select the course</option>
+                @foreach (var c in UiHelpers.Courses)
+                {
+                    <option value="@c">@c</option>
+                }
+            </select>
+            <div class="form-text">Coaches and evaluators only see tryouts for this course.</div>
+            <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
         </div>
         <div class="col-12">
             <div class="form-check form-switch">
