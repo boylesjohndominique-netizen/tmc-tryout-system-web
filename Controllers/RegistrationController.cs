@@ -75,8 +75,18 @@ public class RegistrationController : AppController
         var user = await CurrentUserAsync();
         var model = new ApplicantFormViewModel
         {
+            // Carry over everything the student already gave at sign-up so they only
+            // need to add the details the account does not hold (gender, birth date,
+            // contact number, address and the optional physical info).
+            StudentId = user?.StudentId ?? string.Empty,
+            FirstName = user?.FirstName ?? string.Empty,
+            MiddleName = user?.MiddleName,
+            LastName = user?.LastName ?? string.Empty,
+            YearLevel = user?.YearLevel ?? string.Empty,
             Email = user?.Email,
-            CourseOrGrade = user?.CourseOrGrade ?? string.Empty
+            CourseOrGrade = user?.CourseOrGrade ?? string.Empty,
+            ExistingFrontPath = user?.IdPictureFrontPath,
+            ExistingBackPath = user?.IdPictureBackPath
         };
         await _forms.LoadOptionsAsync(model, user?.CourseOrGrade);
         return View(model);
@@ -85,8 +95,7 @@ public class RegistrationController : AppController
     [HttpPost]
     public async Task<IActionResult> Create(ApplicantFormViewModel model)
     {
-        model.ExistingFrontPath = null;
-        model.ExistingBackPath = null;
+        var user = await CurrentUserAsync();
 
         await _forms.ValidateAsync(ModelState, model, null, CurrentUserId);
         _forms.ValidateIdPictures(ModelState, model);
@@ -99,6 +108,26 @@ public class RegistrationController : AppController
         var applicant = new Applicant { UserId = CurrentUserId, RegisteredAt = DateTime.Now, Status = SelectionStatus.Pending };
         _forms.Apply(applicant, model);
         await _forms.SaveIdPicturesAsync(applicant, model);
+
+        // The student's ID photos and verification already live on their account, so reuse
+        // them instead of making the student upload the same documents for every sport.
+        if (user != null)
+        {
+            if (string.IsNullOrWhiteSpace(applicant.IdPictureFrontPath))
+                applicant.IdPictureFrontPath = user.IdPictureFrontPath;
+            if (string.IsNullOrWhiteSpace(applicant.IdPictureBackPath))
+                applicant.IdPictureBackPath = user.IdPictureBackPath;
+
+            bool uploadedNewPictures = model.IdPictureFront is { Length: > 0 } || model.IdPictureBack is { Length: > 0 };
+            if (!uploadedNewPictures)
+            {
+                applicant.IdVerified = user.IdVerified;
+                applicant.VerifiedById = user.VerifiedById;
+                applicant.VerifiedAt = user.IdVerifiedAt;
+                applicant.VerificationRemarks = user.VerificationRemarks;
+            }
+        }
+
         Db.Applicants.Add(applicant);
 
         try

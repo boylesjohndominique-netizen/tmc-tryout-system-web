@@ -91,6 +91,13 @@
 <div class="form-section">
     <h3><i class="bi bi-person-badge"></i>ID pictures for validation</h3>
     <p>Upload a clear photo of the <strong>front</strong> and <strong>back</strong> of your school ID. The athletics office uses these to verify your identity before the tryout.</p>
+    @if (!Model.ByStaff && (!string.IsNullOrEmpty(Model.ExistingFrontPath) || !string.IsNullOrEmpty(Model.ExistingBackPath)))
+    {
+        <div class="alert alert-success alert-x mb-3" role="alert">
+            <i class="bi bi-patch-check-fill"></i>
+            <div>Your ID photos are already on file. Upload new ones only if they have changed.</div>
+        </div>
+    }
     <div class="row g-3">
         <div class="col-md-6">
             <label asp-for="IdPictureFront" class="form-label"></label>
