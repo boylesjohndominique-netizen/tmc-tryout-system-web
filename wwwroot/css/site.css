@@ -77,6 +77,8 @@ a { text-decoration: none; }
 .brand { display: grid; place-items: center; padding: .1rem 0 .75rem; color: #fff; }
 .brand:hover { color: #fff; }
 .brand-mark { width: 46px; height: 46px; border-radius: 50%; background: var(--gold); color: var(--navy); display: grid; place-items: center; font-size: 1.3rem; flex: none; box-shadow: 0 4px 12px rgba(255, 198, 41, .35); }
+.brand-mark-logo { background: #fff; overflow: hidden; box-shadow: 0 4px 14px rgba(3, 12, 36, .35); }
+.brand-mark-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .brand-text { display: none; }
 
 /* Nav: circular icon buttons */
@@ -604,6 +606,7 @@ html.auth-html, body.auth-body {
 .auth-panel-inner { width: 100%; max-width: 440px; margin-block: auto; }
 .auth-panel-top { display: flex; align-items: center; gap: .7rem; margin-bottom: 1.4rem; }
 .auth-panel-top .brand-mark { width: 42px; height: 42px; border-radius: 12px; font-size: 1.25rem; }
+.auth-panel-top .brand-mark-logo { border-radius: 50%; }
 .auth-panel-title { font-weight: 800; font-size: 1.06rem; color: var(--ink); }
 .auth-panel h2 { font-size: 1.75rem; font-weight: 800; margin-bottom: .3rem; }
 .auth-panel .lead-sm { color: var(--muted); margin-bottom: 1.6rem; }
