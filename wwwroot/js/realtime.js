@@ -240,7 +240,8 @@
 
     connection.on('notifyUser', function (msg) {
         if (!msg) return;
-        pushBell(msg.title, msg.message, msg.icon);
+        showToast(msg.title, msg.message, msg.icon);
+        refreshBell();
         var scopes = (msg && msg.scopes) || [];
         if (scopes.indexOf('all') !== -1 || scopes.indexOf(myScope) !== -1) scheduleRefresh();
     });
@@ -269,7 +270,7 @@
         var empty = bellList.querySelector('.rt-bell-empty');
         if (empty) empty.remove();
         var item = document.createElement('div');
-        item.className = 'rt-bell-item';
+        item.className = 'rt-bell-item rt-bell-unread';
         item.innerHTML =
             '<i class="bi bi-' + (icon || 'bell-fill') + '"></i>' +
             '<div><strong></strong><span></span><small>' + new Date().toLocaleTimeString() + '</small></div>';
@@ -277,6 +278,43 @@
         item.querySelector('span').textContent = message || '';
         bellList.prepend(item);
         while (bellList.children.length > 15) bellList.removeChild(bellList.lastChild);
+    }
+
+    // Rebuild the server-rendered bell from the persisted feed so live pushes never duplicate.
+    function renderBellItem(n) {
+        var a = document.createElement('a');
+        a.className = 'rt-bell-item' + (n.isRead ? '' : ' rt-bell-unread');
+        a.href = n.url || '/Notifications';
+        var icon = document.createElement('i');
+        icon.className = 'bi bi-' + (n.icon || 'bell-fill');
+        var box = document.createElement('div');
+        var strong = document.createElement('strong'); strong.textContent = n.title || 'Update';
+        var span = document.createElement('span'); span.textContent = n.message || '';
+        var small = document.createElement('small'); small.textContent = n.age || '';
+        box.appendChild(strong); box.appendChild(span); box.appendChild(small);
+        a.appendChild(icon); a.appendChild(box);
+        return a;
+    }
+
+    function renderBell(data) {
+        if (bellDot) bellDot.hidden = !(data && data.unread > 0);
+        if (!bellList) return;
+        bellList.innerHTML = '';
+        if (!data || !data.items || !data.items.length) {
+            var empty = document.createElement('div');
+            empty.className = 'rt-bell-empty';
+            empty.textContent = 'No notifications yet.';
+            bellList.appendChild(empty);
+            return;
+        }
+        data.items.forEach(function (n) { bellList.appendChild(renderBellItem(n)); });
+    }
+
+    function refreshBell() {
+        fetch('/Notifications/Feed', { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { if (d) renderBell(d); })
+            .catch(function () { /* keep the current list */ });
     }
 
     function showToast(title, message, icon) {

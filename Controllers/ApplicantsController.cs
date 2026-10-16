@@ -14,11 +14,13 @@ public class ApplicantsController : AppController
 {
     private readonly ApplicantFormService _forms;
     private readonly IRealtimeNotifier _rt;
+    private readonly NotificationService _notifications;
 
-    public ApplicantsController(AppDbContext db, ApplicantFormService forms, IRealtimeNotifier rt) : base(db)
+    public ApplicantsController(AppDbContext db, ApplicantFormService forms, IRealtimeNotifier rt, NotificationService notifications) : base(db)
     {
         _forms = forms;
         _rt = rt;
+        _notifications = notifications;
     }
 
     // ---------- Applicant records: the student accounts ----------
@@ -123,13 +125,14 @@ public class ApplicantsController : AppController
 
         await Db.SaveChangesAsync();
 
-        await _rt.NotifyUserAsync(student.Id,
+        await _notifications.CreateAsync(student.Id,
             approved ? "Account verified" : "Student ID needs new photos",
             approved
                 ? "Your student ID was approved. You can now register for tryouts."
                 : "Your student ID photos were not accepted. Upload new photos from the Account verification page.",
             approved ? "patch-check-fill" : "exclamation-triangle-fill",
-            new[] { RealtimeScopes.Users, RealtimeScopes.Applicants });
+            Url.Action("VerificationStatus", "Account"),
+            NotificationCategories.Verification);
 
         await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Applicants, RealtimeScopes.Dashboard);
 
@@ -309,12 +312,13 @@ public class ApplicantsController : AppController
 
         if (applicant.UserId.HasValue)
         {
-            await _rt.NotifyUserAsync(applicant.UserId.Value,
+            await _notifications.CreateAsync(applicant.UserId.Value,
                 approved ? "ID verified" : "ID needs re-upload",
                 approved ? $"Your ID pictures for {applicant.Sport?.Name} tryouts were approved."
                          : "Your ID pictures were not accepted. Please upload new ones.",
                 approved ? "patch-check-fill" : "exclamation-triangle-fill",
-                new[] { RealtimeScopes.Registrations, RealtimeScopes.Applicants });
+                Url.Action("VerificationStatus", "Account"),
+                NotificationCategories.Verification);
         }
         await _rt.ChangedAsync(RealtimeScopes.Applicants, RealtimeScopes.Dashboard);
 

@@ -13,10 +13,12 @@ namespace TmcTryoutSystem.Controllers;
 public class SchedulesController : AppController
 {
     private readonly IRealtimeNotifier _rt;
+    private readonly NotificationService _notifications;
 
-    public SchedulesController(AppDbContext db, IRealtimeNotifier rt) : base(db)
+    public SchedulesController(AppDbContext db, IRealtimeNotifier rt, NotificationService notifications) : base(db)
     {
         _rt = rt;
+        _notifications = notifications;
     }
 
     // Everyone signed in can see schedules; students only see what is coming up.
@@ -138,6 +140,7 @@ public class SchedulesController : AppController
         await Db.SaveChangesAsync();
 
         await _rt.ChangedAsync(RealtimeScopes.Schedules, RealtimeScopes.Dashboard, RealtimeScopes.Registrations, RealtimeScopes.Explore, RealtimeScopes.Sports);
+        await NotifyNewTryoutAsync(schedule);
         Success("The tryout schedule was created.");
         return RedirectToAction(nameof(Index));
     }
@@ -244,6 +247,32 @@ public class SchedulesController : AppController
     }
 
     // ---------- Helpers ----------
+    /// <summary>
+    /// Tells the students who already registered for this sport (and match the schedule's course,
+    /// when one is set) that a new tryout date is available.
+    /// </summary>
+    private async Task NotifyNewTryoutAsync(TryoutSchedule schedule)
+    {
+        var recipientIds = await Db.Applicants.AsNoTracking()
+            .Where(a => a.SportId == schedule.SportId && a.UserId != null
+                        && (schedule.CourseOrGrade == null || a.CourseOrGrade == schedule.CourseOrGrade))
+            .Select(a => a.UserId!.Value)
+            .Distinct()
+            .ToListAsync();
+        if (recipientIds.Count == 0) return;
+
+        var sportName = await Db.Sports.AsNoTracking()
+            .Where(s => s.Id == schedule.SportId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync();
+
+        await _notifications.CreateManyAsync(recipientIds, "New tryout scheduled",
+            $"{sportName ?? "A sport"} has a new tryout on {schedule.StartAt:MMM d, yyyy 'at' h:mm tt} at {schedule.Venue}.",
+            "calendar-plus-fill",
+            Url.Action("Index", "Schedules"),
+            NotificationCategories.Schedule);
+    }
+
     private async Task LoadSportsAsync(ScheduleFormViewModel model)
     {
         var allowed = await AllowedSportIdsAsync();

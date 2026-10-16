@@ -1,0 +1,69 @@
+@model NotificationListViewModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Notifications</h1>
+        <p>Tryout results, schedule updates and notices from the athletics office.</p>
+    </div>
+    @if (Model.UnreadCount > 0)
+    {
+        <form asp-action="MarkAllRead" method="post">
+            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+            <button type="submit" class="btn btn-light-x"><i class="bi bi-check2-all me-1"></i>Mark all read</button>
+        </form>
+    }
+</div>
+
+<div class="card-x">
+    <div class="notif-tabs">
+        <a class="notif-tab @(Model.UnreadOnly ? "" : "active")" asp-action="Index">All</a>
+        <a class="notif-tab @(Model.UnreadOnly ? "active" : "")" asp-action="Index" asp-route-filter="unread">
+            Unread@(Model.UnreadCount > 0 ? $" ({Model.UnreadCount})" : "")
+        </a>
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="icon-tile"><i class="bi bi-bell"></i></div>
+            <h3>@(Model.UnreadOnly ? "No unread notifications" : "No notifications yet")</h3>
+            <p>@(Model.UnreadOnly ? "You are all caught up." : "Tryout results and updates from the athletics office will appear here.")</p>
+        </div>
+    }
+    else
+    {
+        <ul class="notif-list">
+            @foreach (var n in Model.Items)
+            {
+                var href = string.IsNullOrWhiteSpace(n.Url) ? null : n.Url;
+                <li class="notif-item @(n.IsRead ? "" : "notif-unread")">
+                    <span class="notif-icon"><i class="bi bi-@n.Icon"></i></span>
+                    <div class="notif-body">
+                        <div class="notif-line">
+                            <strong>@n.Title</strong>
+                            <span class="badge-soft @NotificationCategories.BadgeClass(n.Category)">@NotificationCategories.Label(n.Category)</span>
+                        </div>
+                        <p>@n.Message</p>
+                        <small>@n.AgeText</small>
+                    </div>
+                    <div class="notif-actions">
+                        @if (href != null)
+                        {
+                            <a href="@href" class="btn-action" title="Open"><i class="bi bi-box-arrow-up-right"></i></a>
+                        }
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="MarkRead" asp-route-id="@n.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                <button type="submit" class="btn-action" title="Mark as read"><i class="bi bi-check2"></i></button>
+                            </form>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>

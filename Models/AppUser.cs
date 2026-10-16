@@ -94,6 +94,9 @@ public class AppUser
     /// <summary>Capabilities granted by an administrator. Only meaningful for Coach/Evaluator accounts.</summary>
     public ICollection<UserPermission> Permissions { get; set; } = new List<UserPermission>();
 
+    /// <summary>Persisted in-app notifications addressed to this user (students).</summary>
+    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
     /// <summary>True once the email OTP and the admin ID check have both passed.</summary>
     public bool IsFullyVerified => EmailVerified && IdVerified;
 

@@ -1,3 +1,5 @@
+@using TmcTryoutSystem.Services
+@inject NotificationService Notifications
 @{
     var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
     string Active(params string[] names) =>
@@ -24,6 +26,11 @@
     bool reportsView = can(Permissions.ReportsView);
     bool showTryoutGroup = applicantsView || schedulesView || evaluationsView || screeningView || selectionView;
     bool showManageGroup = sportsView || sportsManage || reportsView || isAdmin;
+
+    // Persisted notifications for the signed-in student, rendered into the bell on first paint.
+    int currentUserId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : 0;
+    var bellItems = isStudent && currentUserId > 0 ? await Notifications.RecentAsync(currentUserId, 12) : new List<Notification>();
+    int unreadCount = isStudent && currentUserId > 0 ? await Notifications.UnreadCountAsync(currentUserId) : 0;
 }
 <!DOCTYPE html>
 <html lang="en" class="app-html">
@@ -61,6 +68,7 @@
                 <a class="side-link @Active("Explore")" asp-controller="Explore" asp-action="Index"><i class="bi bi-compass"></i><span class="side-label">Explore sports</span></a>
                 <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
                 <a class="side-link @Active("Account") @(idVerified ? "" : "side-link-alert")" asp-controller="Account" asp-action="VerificationStatus"><i class="bi bi-shield-check"></i><span class="side-label">Account verification</span></a>
+                <a class="side-link @Active("Notifications")" asp-controller="Notifications" asp-action="Index"><i class="bi bi-bell"></i><span class="side-label">Notifications</span></a>
             }
             else
             {
@@ -109,6 +117,9 @@
                 {
                     <a class="side-link @Active("Users")" asp-controller="Users" asp-action="Index"><i class="bi bi-person-gear"></i><span class="side-label">User accounts</span></a>
                 }
+
+                <div class="side-group">Notifications</div>
+                <a class="side-link @Active("Notifications")" asp-controller="Notifications" asp-action="Compose"><i class="bi bi-send"></i><span class="side-label">Send notification</span></a>
             }
         </nav>
 
@@ -164,11 +175,41 @@
                 <div class="dropdown rt-bell-wrap">
                     <button class="rt-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
                         <i class="bi bi-bell"></i>
-                        <span class="rt-bell-dot" id="rtBellDot" hidden></span>
+                        <span class="rt-bell-dot" id="rtBellDot" @(unreadCount == 0 ? "hidden" : "")></span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end rt-bell-menu shadow" aria-labelledby="rtBellDot">
-                        <h6 class="dropdown-header">Notifications</h6>
-                        <div id="rtBellList"><div class="rt-bell-empty">No notifications yet.</div></div>
+                        <div class="rt-bell-head">
+                            <span class="rt-bell-title">Notifications</span>
+                            @if (unreadCount > 0)
+                            {
+                                <form asp-controller="Notifications" asp-action="MarkAllRead" method="post">
+                                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                    <button type="submit" class="rt-bell-markall">Mark all read</button>
+                                </form>
+                            }
+                        </div>
+                        <div id="rtBellList" data-rt-bell-list>
+                            @if (bellItems.Count == 0)
+                            {
+                                <div class="rt-bell-empty">No notifications yet.</div>
+                            }
+                            else
+                            {
+                                foreach (var n in bellItems)
+                                {
+                                    var href = string.IsNullOrWhiteSpace(n.Url) ? Url.Action("Index", "Notifications") : n.Url;
+                                    <a class="rt-bell-item @(n.IsRead ? "" : "rt-bell-unread")" href="@href">
+                                        <i class="bi bi-@n.Icon"></i>
+                                        <div>
+                                            <strong>@n.Title</strong>
+                                            <span>@n.Message</span>
+                                            <small>@n.AgeText</small>
+                                        </div>
+                                    </a>
+                                }
+                            }
+                        </div>
+                        <a class="rt-bell-foot" asp-controller="Notifications" asp-action="Index">View all notifications</a>
                     </div>
                     <div class="rt-live-pill" id="rtPill" title="Live updates connected"><i class="bi bi-broadcast"></i></div>
                     <div id="rtToasts" class="rt-toasts"></div>

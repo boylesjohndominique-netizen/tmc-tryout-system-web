@@ -39,6 +39,7 @@ builder.Services.AddScoped<ApplicantFormService>();
 builder.Services.AddScoped<AccountIdPictureService>();
 builder.Services.AddScoped<ProfilePictureService>();
 builder.Services.AddScoped<VerificationCodeService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddSingleton<IRealtimeNotifier, RealtimeNotifier>();
 builder.Services.AddSignalR();
 

@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<Evaluation> Evaluations => Set<Evaluation>();
     public DbSet<EvaluationScore> EvaluationScores => Set<EvaluationScore>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -82,5 +83,11 @@ public class AppDbContext : DbContext
         b.Entity<UserPermission>()
             .HasOne(p => p.User).WithMany(u => u.Permissions)
             .HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+
+        // Notifications belong to one user; deleting an account clears their notifications.
+        b.Entity<Notification>().HasIndex(n => new { n.UserId, n.IsRead });
+        b.Entity<Notification>()
+            .HasOne(n => n.User).WithMany(u => u.Notifications)
+            .HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

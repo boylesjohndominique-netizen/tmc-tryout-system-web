@@ -14,11 +14,13 @@ public class RegistrationController : AppController
 {
     private readonly ApplicantFormService _forms;
     private readonly IRealtimeNotifier _rt;
+    private readonly NotificationService _notifications;
 
-    public RegistrationController(AppDbContext db, ApplicantFormService forms, IRealtimeNotifier rt) : base(db)
+    public RegistrationController(AppDbContext db, ApplicantFormService forms, IRealtimeNotifier rt, NotificationService notifications) : base(db)
     {
         _forms = forms;
         _rt = rt;
+        _notifications = notifications;
     }
 
     public async Task<IActionResult> Index()
@@ -144,6 +146,15 @@ public class RegistrationController : AppController
         }
 
         await _rt.ChangedAsync(RealtimeScopes.Registrations, RealtimeScopes.Applicants, RealtimeScopes.Dashboard, RealtimeScopes.Explore, RealtimeScopes.Sports, RealtimeScopes.Reports);
+        var sportName = await Db.Sports.AsNoTracking()
+            .Where(s => s.Id == applicant.SportId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync();
+        await _notifications.CreateAsync(CurrentUserId, "Registration received",
+            $"You are registered for {sportName ?? "your sport"}. The athletics office will keep you posted on the tryout date.",
+            "clipboard-check-fill",
+            Url.Action("Index", "Registration"),
+            NotificationCategories.General);
         Success("You are registered. You can try out for several sports — add another from My registration.");
         return RedirectToAction(nameof(Index));
     }

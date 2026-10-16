@@ -27,6 +27,14 @@ public static class UiHelpers
         "graph-up", "clipboard-check", "joystick"
     };
 
+    /// <summary>Icons an administrator can pick for a custom notification.</summary>
+    public static readonly string[] NotificationIcons =
+    {
+        "bell-fill", "megaphone-fill", "info-circle-fill", "exclamation-triangle-fill",
+        "patch-check-fill", "calendar-plus-fill", "trophy-fill", "clipboard-check-fill",
+        "star-fill", "shield-check"
+    };
+
     /// <summary>The year levels Trinidad Municipal College offers: college only, 1st to 4th year.</summary>
     public static readonly string[] YearLevels =
     {

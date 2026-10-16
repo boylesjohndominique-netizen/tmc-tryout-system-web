@@ -96,6 +96,18 @@
             syncCourse();
         }
 
+        // Notifications compose: show only the field for the chosen audience
+        var audienceSelect = document.querySelector('[data-audience-select]');
+        if (audienceSelect) {
+            var syncAudience = function () {
+                document.querySelectorAll('[data-audience-field]').forEach(function (el) {
+                    el.style.display = el.getAttribute('data-audience-field') === audienceSelect.value ? '' : 'none';
+                });
+            };
+            audienceSelect.addEventListener('change', syncAudience);
+            syncAudience();
+        }
+
         // Live overall score on the evaluation form
         var evalForm = document.querySelector('[data-eval-form]');
         if (evalForm) {

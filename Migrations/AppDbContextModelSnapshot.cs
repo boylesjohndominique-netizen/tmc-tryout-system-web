@@ -369,6 +369,54 @@ namespace TmcTryoutSystem.Migrations
                     b.ToTable("EvaluationScores");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(260)
+                        .HasColumnType("varchar(260)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.Sport", b =>
                 {
                     b.Property<int>("Id")
@@ -610,6 +658,17 @@ namespace TmcTryoutSystem.Migrations
                     b.Navigation("Evaluation");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.Notification", b =>
+                {
+                    b.HasOne("TmcTryoutSystem.Models.AppUser", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.Sport", b =>
                 {
                     b.HasOne("TmcTryoutSystem.Models.SportCategory", "Category")
@@ -663,6 +722,8 @@ namespace TmcTryoutSystem.Migrations
 
             modelBuilder.Entity("TmcTryoutSystem.Models.AppUser", b =>
                 {
+                    b.Navigation("Notifications");
+
                     b.Navigation("Permissions");
 
                     b.Navigation("Registrations");

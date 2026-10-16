@@ -14,10 +14,12 @@ namespace TmcTryoutSystem.Controllers;
 public class SelectionController : AppController
 {
     private readonly IRealtimeNotifier _rt;
+    private readonly NotificationService _notifications;
 
-    public SelectionController(AppDbContext db, IRealtimeNotifier rt) : base(db)
+    public SelectionController(AppDbContext db, IRealtimeNotifier rt, NotificationService notifications) : base(db)
     {
         _rt = rt;
+        _notifications = notifications;
     }
 
     [Authorize(Policy = Permissions.SelectionView)]
@@ -118,12 +120,13 @@ public class SelectionController : AppController
 
         if (applicant.UserId.HasValue)
         {
-            await _rt.NotifyUserAsync(applicant.UserId.Value, "Tryout result updated",
+            await _notifications.CreateAsync(applicant.UserId.Value, "Tryout result updated",
                 $"{applicant.DisplayName}: you are now marked {status.DisplayName()} for {applicant.Sport?.Name}.",
                 status == SelectionStatus.Selected ? "patch-check-fill" : "info-circle-fill",
-                new[] { RealtimeScopes.Registrations, RealtimeScopes.Selection });
+                Url.Action("Index", "Registration"),
+                NotificationCategories.Selection);
         }
-        await _rt.ChangedAsync(RealtimeScopes.Selection, RealtimeScopes.Screening, RealtimeScopes.Applicants, RealtimeScopes.Dashboard, RealtimeScopes.Explore, RealtimeScopes.Reports);
+        await _rt.ChangedAsync(RealtimeScopes.Registrations, RealtimeScopes.Selection, RealtimeScopes.Screening, RealtimeScopes.Applicants, RealtimeScopes.Dashboard, RealtimeScopes.Explore, RealtimeScopes.Reports);
 
         Success($"{applicant.DisplayName} is now marked {EnumExtensions.DisplayName(status)}.");
         return RedirectBack(returnUrl);
@@ -161,7 +164,21 @@ public class SelectionController : AppController
             r.Applicant.DecidedAt = DateTime.Now;
         }
         await Db.SaveChangesAsync();
-        await _rt.ChangedAsync(RealtimeScopes.Selection, RealtimeScopes.Screening, RealtimeScopes.Applicants, RealtimeScopes.Dashboard, RealtimeScopes.Explore, RealtimeScopes.Reports);
+        await _rt.ChangedAsync(RealtimeScopes.Registrations, RealtimeScopes.Selection, RealtimeScopes.Screening, RealtimeScopes.Applicants, RealtimeScopes.Dashboard, RealtimeScopes.Explore, RealtimeScopes.Reports);
+
+        var selectedUserIds = candidates
+            .Where(r => r.Applicant.UserId.HasValue)
+            .Select(r => r.Applicant.UserId!.Value)
+            .Distinct()
+            .ToList();
+        if (selectedUserIds.Count > 0)
+        {
+            await _notifications.CreateManyAsync(selectedUserIds, "You were selected",
+                $"Congratulations! You were selected for {sport.Name}.",
+                "trophy-fill",
+                Url.Action("Index", "Registration"),
+                NotificationCategories.Selection);
+        }
 
         if (candidates.Count == 0)
             Warning($"No pending qualified applicants were available for {sport.Name}, or its roster slots are full.");

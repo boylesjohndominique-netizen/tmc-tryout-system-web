@@ -1,0 +1,101 @@
+@model ComposeNotificationViewModel
+@{
+    ViewData["Title"] = "Send notification";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Send a notification</h1>
+        <p>Send a message to students. They will see it in their notification bell and on their notifications page.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-light-x"><i class="bi bi-bell me-1"></i>My notifications</a>
+</div>
+
+<div class="card-x">
+    <div class="card-x-body">
+        <form asp-action="Compose" method="post" data-once>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="Tryout schedule update" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Message" class="form-label"></label>
+                <textarea asp-for="Message" class="form-control" rows="4" placeholder="Write the message students will receive..."></textarea>
+                <span asp-validation-for="Message" class="text-danger"></span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="Audience" class="form-label"></label>
+                    <select asp-for="Audience" class="form-select" data-audience-select>
+                        <option value="all">All students</option>
+                        <option value="course">Students in a course</option>
+                        <option value="sport">Students registered for a sport</option>
+                        <option value="student">One student</option>
+                    </select>
+                    <span asp-validation-for="Audience" class="text-danger"></span>
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="Icon" class="form-label"></label>
+                    <select asp-for="Icon" class="form-select">
+                        @foreach (var icon in UiHelpers.NotificationIcons)
+                        {
+                            <option value="@icon" selected="@(Model.Icon == icon)">@icon</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Icon" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mt-3" data-audience-field="course">
+                <label asp-for="CourseOrGrade" class="form-label"></label>
+                <select asp-for="CourseOrGrade" class="form-select">
+                    <option value="">Select a course</option>
+                    @foreach (var c in Model.Courses)
+                    {
+                        <option value="@c" selected="@(Model.CourseOrGrade == c)">@c</option>
+                    }
+                </select>
+                <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
+            </div>
+
+            <div class="mt-3" data-audience-field="sport">
+                <label asp-for="SportId" class="form-label"></label>
+                <select asp-for="SportId" class="form-select">
+                    <option value="">Select a sport</option>
+                    @foreach (var s in Model.Sports)
+                    {
+                        <option value="@s.Id" selected="@(Model.SportId == s.Id)">@s.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="SportId" class="text-danger"></span>
+            </div>
+
+            <div class="mt-3" data-audience-field="student">
+                <label asp-for="TargetUserId" class="form-label"></label>
+                <select asp-for="TargetUserId" class="form-select">
+                    <option value="">Select a student</option>
+                    @foreach (var s in Model.Students)
+                    {
+                        <option value="@s.Id" selected="@(Model.TargetUserId == s.Id)">@s.DisplayName@(string.IsNullOrEmpty(s.StudentId) ? "" : $" · {s.StudentId}")</option>
+                    }
+                </select>
+                <span asp-validation-for="TargetUserId" class="text-danger"></span>
+            </div>
+
+            <div class="mt-3 mb-4">
+                <label asp-for="Url" class="form-label"></label>
+                <input asp-for="Url" class="form-control" placeholder="Optional link, e.g. /Schedules" />
+                <div class="form-text">Where the notification opens. Leave blank to open the notifications page.</div>
+                <span asp-validation-for="Url" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-gold"><i class="bi bi-send me-1"></i>Send notification</button>
+            <a asp-action="Index" class="btn btn-light-x ms-2">Cancel</a>
+        </form>
+    </div>
+</div>
