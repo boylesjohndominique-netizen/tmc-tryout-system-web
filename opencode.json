@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "watcher": {
+    "ignore": [
+      "**/bin/**",
+      "**/obj/**",
+      "**/TestResults/**",
+      "**/publish/**",
+      "**/wwwroot/uploads/**"
+    ]
+  },
+  "permission": {
+    "read": {
+      "**/bin/**": "deny",
+      "**/obj/**": "deny",
+      "**/TestResults/**": "deny"
+    }
+  }
+}
