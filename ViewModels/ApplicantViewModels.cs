@@ -295,6 +295,9 @@ public class ExploreSportDetailsViewModel
     public List<TryoutSchedule> UpcomingSchedules { get; set; } = new();
     public List<TryoutSchedule> PastSchedules { get; set; } = new();
     public bool AlreadyTryingOut { get; set; }
+
+    /// <summary>False when this sport has no tryout for the viewing student's course.</summary>
+    public bool OfferedForCourse { get; set; } = true;
 }
 
 public class PlayerCard

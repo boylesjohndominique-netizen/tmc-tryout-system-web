@@ -36,9 +36,13 @@
         </div>
     </div>
     <div class="page-actions">
-        @if (isStudent && !mine && Model.Sport.IsActive)
+        @if (isStudent && !mine && Model.Sport.IsActive && Model.OfferedForCourse)
         {
             <a asp-controller="Registration" asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Try out for @Model.Sport.Name</a>
+        }
+        else if (isStudent && !mine && Model.Sport.IsActive && !Model.OfferedForCourse)
+        {
+            <span class="badge-soft badge-soft-muted"><i class="bi bi-mortarboard"></i>No tryout for your course yet</span>
         }
     </div>
 </div>
@@ -88,7 +92,7 @@
                         <div class="date-tile"><span>@t.StartAt.ToString("MMM").ToUpper()</span><b>@t.StartAt.Day</b></div>
                         <div class="grow">
                             <strong>@t.Title</strong>
-                            <small>@t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; @t.Venue</small>
+                            <small><i class="bi bi-mortarboard me-1"></i>@UiHelpers.CourseShort(t.CourseOrGrade) &middot; @t.StartAt.ToString("dddd, h:mm tt") - @t.EndAt.ToString("h:mm tt") &middot; @t.Venue</small>
                         </div>
                         <span class="badge-soft @UiHelpers.ScheduleBadge(t.Status)">@t.Status</span>
                     </div>

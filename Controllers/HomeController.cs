@@ -27,16 +27,20 @@ public class HomeController : AppController
                 .OrderBy(a => a.Sport!.Name)
                 .ToListAsync();
 
+            var course = await CurrentUserCourseAsync();
+            bool scoped = !string.IsNullOrWhiteSpace(course);
             var schedulesPerEntry = new Dictionary<int, List<TryoutSchedule>>();
             var now = DateTime.Now;
             foreach (var e in entries)
             {
-                schedulesPerEntry[e.Id] = await Db.Schedules
+                var query = Db.Schedules
                     .Include(t => t.Sport)
                     .AsNoTracking()
-                    .Where(t => t.SportId == e.SportId && !t.IsCancelled && t.EndAt >= now)
-                    .OrderBy(t => t.StartAt)
-                    .ToListAsync();
+                    .Where(t => t.SportId == e.SportId && !t.IsCancelled && t.EndAt >= now);
+                if (scoped)
+                    query = query.Where(t => t.CourseOrGrade == null || t.CourseOrGrade == course);
+
+                schedulesPerEntry[e.Id] = await query.OrderBy(t => t.StartAt).ToListAsync();
             }
 
             return View("StudentIndex", new StudentDashboardViewModel

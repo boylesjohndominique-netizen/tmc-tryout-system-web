@@ -25,24 +25,44 @@ public class ApplicantFormService
     public static string NormalizeStudentId(string? value) =>
         (value ?? string.Empty).Trim().ToUpperInvariant();
 
-    /// <summary>Loads the sport and schedule dropdown options.</summary>
-    public async Task LoadOptionsAsync(ApplicantFormViewModel model)
+    /// <summary>
+    /// Loads the sport and schedule dropdown options. When <paramref name="course"/> is given
+    /// (a student's own course), only sports that hold a tryout for that course are offered and
+    /// only that course's schedules are listed.
+    /// </summary>
+    public async Task LoadOptionsAsync(ApplicantFormViewModel model, string? course = null)
     {
         var now = DateTime.Now;
         int currentSport = model.SportId ?? 0;
         int currentSchedule = model.TryoutScheduleId ?? 0;
+        bool scoped = !string.IsNullOrWhiteSpace(course);
 
-        model.Sports = await _db.Sports
+        var sportsQuery = _db.Sports
             .AsNoTracking()
-            .Where(s => s.IsActive || s.Id == currentSport)
-            .OrderBy(s => s.Name)
-            .ToListAsync();
+            .Where(s => s.IsActive || s.Id == currentSport);
 
-        model.Schedules = await _db.Schedules
+        if (scoped)
+        {
+            var offeredSportIds = await _db.Schedules
+                .AsNoTracking()
+                .Where(t => !t.IsCancelled && t.EndAt >= now
+                            && (t.CourseOrGrade == null || t.CourseOrGrade == course))
+                .Select(t => t.SportId)
+                .Distinct()
+                .ToListAsync();
+            sportsQuery = sportsQuery.Where(s => offeredSportIds.Contains(s.Id) || s.Id == currentSport);
+        }
+
+        model.Sports = await sportsQuery.OrderBy(s => s.Name).ToListAsync();
+
+        var schedulesQuery = _db.Schedules
             .AsNoTracking()
-            .Where(t => (!t.IsCancelled && t.EndAt >= now) || t.Id == currentSchedule)
-            .OrderBy(t => t.StartAt)
-            .ToListAsync();
+            .Where(t => (!t.IsCancelled && t.EndAt >= now) || t.Id == currentSchedule);
+
+        if (scoped)
+            schedulesQuery = schedulesQuery.Where(t => t.CourseOrGrade == null || t.CourseOrGrade == course);
+
+        model.Schedules = await schedulesQuery.OrderBy(t => t.StartAt).ToListAsync();
     }
 
     /// <summary>
@@ -57,6 +77,19 @@ public class ApplicantFormService
     {
         int existingId = existing?.Id ?? 0;
         var studentId = NormalizeStudentId(model.StudentId);
+
+        // A student may only try out for their own course. The account is authoritative, so the
+        // course on the form is overwritten with it and later saved on the entry.
+        string? ownerCourse = null;
+        if (ownerUserId.HasValue)
+        {
+            ownerCourse = await _db.Users.AsNoTracking()
+                .Where(u => u.Id == ownerUserId.Value)
+                .Select(u => u.CourseOrGrade)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrWhiteSpace(ownerCourse))
+                model.CourseOrGrade = ownerCourse;
+        }
 
         // Students can try out for several sports, so the same student ID is allowed
         // once per sport instead of once overall.
@@ -92,6 +125,13 @@ public class ApplicantFormService
                 state.AddModelError(nameof(model.SportId), "Select a sport from the list.");
             else if (!sport.IsActive && existing?.SportId != sport.Id)
                 state.AddModelError(nameof(model.SportId), "This sport is not accepting registrations right now.");
+            else if (existing == null && !string.IsNullOrWhiteSpace(ownerCourse)
+                     && !await _db.Schedules.AsNoTracking().AnyAsync(t => t.SportId == sport.Id
+                            && !t.IsCancelled && t.EndAt >= DateTime.Now
+                            && (t.CourseOrGrade == null || t.CourseOrGrade == ownerCourse)))
+            {
+                state.AddModelError(nameof(model.SportId), "This sport has no tryout for your course yet.");
+            }
         }
 
         if (model.TryoutScheduleId.HasValue)
@@ -105,6 +145,10 @@ public class ApplicantFormService
                 state.AddModelError(nameof(model.TryoutScheduleId), "This schedule belongs to a different sport.");
             else if (!unchanged && (schedule.IsCancelled || schedule.EndAt < DateTime.Now))
                 state.AddModelError(nameof(model.TryoutScheduleId), "Choose an upcoming tryout schedule.");
+            else if (!string.IsNullOrWhiteSpace(schedule.CourseOrGrade)
+                     && !string.IsNullOrWhiteSpace(model.CourseOrGrade)
+                     && !string.Equals(schedule.CourseOrGrade, model.CourseOrGrade.Trim(), StringComparison.OrdinalIgnoreCase))
+                state.AddModelError(nameof(model.TryoutScheduleId), "This tryout is for a different course.");
         }
     }
 

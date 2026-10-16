@@ -98,12 +98,19 @@ public class ExploreController : AppController
             .Select(a => new PlayerCard { Applicant = a, Score = a.OverallScore, Status = a.Status.DisplayName() })
             .ToList();
 
+        // A student only sees the tryout dates posted for their own course.
+        var course = await CurrentUserCourseAsync();
+        bool scoped = User.IsInRole(Roles.Student) && !string.IsNullOrWhiteSpace(course);
+        var visibleSchedules = scoped
+            ? sport.Schedules.Where(t => t.CourseOrGrade == null || t.CourseOrGrade == course).ToList()
+            : sport.Schedules.ToList();
+
         var now = DateTime.Now;
-        var upcoming = sport.Schedules
+        var upcoming = visibleSchedules
             .Where(t => !t.IsCancelled && t.EndAt >= now)
             .OrderBy(t => t.StartAt)
             .ToList();
-        var past = sport.Schedules
+        var past = visibleSchedules
             .Where(t => !t.IsCancelled && t.EndAt < now)
             .OrderByDescending(t => t.StartAt)
             .Take(5)
@@ -111,6 +118,7 @@ public class ExploreController : AppController
 
         bool already = User.Identity?.IsAuthenticated == true &&
                        await Db.Applicants.AnyAsync(a => a.UserId == CurrentUserId && a.SportId == id);
+        bool offered = !scoped || upcoming.Count > 0;
 
         return View(new ExploreSportDetailsViewModel
         {
@@ -121,7 +129,8 @@ public class ExploreController : AppController
             RecentPlayers = recent,
             UpcomingSchedules = upcoming,
             PastSchedules = past,
-            AlreadyTryingOut = already
+            AlreadyTryingOut = already,
+            OfferedForCourse = offered
         });
     }
 }

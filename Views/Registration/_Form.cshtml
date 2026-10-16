@@ -40,11 +40,25 @@
         </div>
         <div class="col-md-6">
             <label asp-for="CourseOrGrade" class="form-label">Course</label>
-            <select asp-for="CourseOrGrade" class="form-select">
-                <option value="">Select your course</option>
-                @foreach (var c in UiHelpers.Courses) { <option value="@c">@c</option> }
-            </select>
-            <div class="form-text">Trinidad Municipal College offers BSIT, BSOA, BSED, BSPolSci and BSCrim.</div>
+            @if (Model.ByStaff || string.IsNullOrWhiteSpace(Model.CourseOrGrade))
+            {
+                <select asp-for="CourseOrGrade" class="form-select">
+                    <option value="">Select the course</option>
+                    @foreach (var c in UiHelpers.Courses) { <option value="@c">@c</option> }
+                </select>
+                <div class="form-text">A student can only try out for their own course's tryouts.</div>
+            }
+            else
+            {
+                <select class="form-select" disabled>
+                    @foreach (var c in UiHelpers.Courses)
+                    {
+                        <option value="@c" selected="@(Model.CourseOrGrade == c)">@c</option>
+                    }
+                </select>
+                <input type="hidden" asp-for="CourseOrGrade" />
+                <div class="form-text">You can only try out for tryouts in your own course. Contact the athletics office to change it.</div>
+            }
             <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
         </div>
         <div class="col-md-6">
