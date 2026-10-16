@@ -44,7 +44,8 @@ public class Applicant
 
     public DateTime BirthDate { get; set; }
 
-    [Required, StringLength(20)]
+    /// <summary>Program label, e.g. "BSIT (Bachelor of Science in Information Technology)".</summary>
+    [Required, StringLength(80)]
     public string CourseOrGrade { get; set; } = string.Empty;
 
     [Required, StringLength(20)]

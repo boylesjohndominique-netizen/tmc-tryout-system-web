@@ -16,27 +16,39 @@ public static class UiHelpers
         "1st Year", "2nd Year", "3rd Year", "4th Year"
     };
 
-    /// <summary>The degree programs TMC offers. Students must pick one of these.</summary>
+    /// <summary>
+    /// The degree programs TMC offers, shown as "acronym (full program name)" so students see the
+    /// program they are enrolling in without losing the shorthand they know. Students must pick one.
+    /// The label is also the value that gets stored, so keep the wording stable once it is in use.
+    /// </summary>
     public static readonly string[] Courses =
     {
-        "BSIT", "BSOA", "BSED", "BSPolSci", "BSCrim"
+        "BSIT (Bachelor of Science in Information Technology)",
+        "BSOA (Bachelor of Science in Office Administration)",
+        "BSED (Bachelor of Secondary Education)",
+        "BSPolSci (Bachelor of Science in Political Science)",
+        "BSCrim (Bachelor of Science in Criminology)"
     };
 
-    /// <summary>Course names shown as suggestions (includes common full names).</summary>
+    /// <summary>Course names shown as suggestions. Same labels as <see cref="Courses"/>.</summary>
     public static readonly string[] CourseSuggestions =
     {
-        "BSIT", "BSOA", "BSED", "BSPolSci", "BSCrim"
+        "BSIT (Bachelor of Science in Information Technology)",
+        "BSOA (Bachelor of Science in Office Administration)",
+        "BSED (Bachelor of Secondary Education)",
+        "BSPolSci (Bachelor of Science in Political Science)",
+        "BSCrim (Bachelor of Science in Criminology)"
     };
 
     /// <summary>
-    /// TMC student number format, e.g. 24-0202: two-digit year, a dash, then four digits.
+    /// TMC student number format, e.g. 24-000123: two-digit year, a dash, then six digits.
     /// </summary>
-    public const string StudentIdPattern = @"^\d{2}-\d{4}$";
+    public const string StudentIdPattern = @"^\d{2}-\d{6}$";
 
-    public const string StudentIdExample = "24-0202";
+    public const string StudentIdExample = "24-000123";
 
     public static string StudentIdHint =>
-        $"Format: {StudentIdExample} — two-digit year, a dash, then four digits.";
+        $"Format: {StudentIdExample} — two-digit year, a dash, then six digits.";
 
     /// <summary>Trims and upper-cases a student ID so lookups and storage always match.</summary>
     public static string NormalizeStudentId(string? value) =>

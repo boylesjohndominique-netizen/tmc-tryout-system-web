@@ -10,8 +10,8 @@ public class ApplicantFormViewModel
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Enter the student ID.")]
-    [StringLength(10, MinimumLength = 7, ErrorMessage = "The student ID must follow the format 00-0000.")]
-    [RegularExpression(UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 00-0000: two digits, a dash, then four digits.")]
+    [StringLength(12, MinimumLength = 9, ErrorMessage = "The student ID must follow the format 00-000000.")]
+    [RegularExpression(UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 00-000000: two digits, a dash, then six digits.")]
     [Display(Name = "Student ID")]
     public string StudentId { get; set; } = string.Empty;
 

@@ -32,7 +32,7 @@ public class RegisterViewModel
     public string LastName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Enter your student ID.")]
-    [RegularExpression(Helpers.UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 00-0000: two digits, a dash, then four digits (for example 24-0202).")]
+    [RegularExpression(Helpers.UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 00-000000: two digits, a dash, then six digits (for example 24-000123).")]
     [Display(Name = "Student ID")]
     public string StudentId { get; set; } = string.Empty;
 

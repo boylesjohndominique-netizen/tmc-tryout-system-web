@@ -50,7 +50,7 @@ You can also register a brand-new student account from the login page.
 ## Student sign-up and verification
 
 Students create their own account with **first, middle and last name, student ID
-(`00-0000`), photos of the front and back of their student ID, email and
+(`00-000000`), photos of the front and back of their student ID, email and
 password**. There is no username — students sign in with their **email or
 student ID**, while staff keep signing in with their username.
 
@@ -138,7 +138,9 @@ verified instead of locking them out.
 - Duplicate registrations are prevented both in the form (student ID / one
   registration per account) and at the database level with unique indexes.
   Student IDs are unique per account, so a student ID doubles as a sign-in name.
-- Student ID format is `00-0000` everywhere (accounts and applicant records).
+- Student ID format is `00-000000` everywhere (accounts and applicant records).
+- Course is stored as the full label, `BSIT (Bachelor of Science in Information
+  Technology)` style, so pickers, tables and reports read the same everywhere.
 - Email is sent with the built-in `System.Net.Mail.SmtpClient`, so no extra
   package is required.
 - Reports can be viewed on-screen, printed, or exported to CSV.

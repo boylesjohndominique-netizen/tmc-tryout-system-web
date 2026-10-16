@@ -27,12 +27,15 @@ public class AppUser
     [StringLength(60)]
     public string? LastName { get; set; }
 
-    /// <summary>TMC student number in the 00-0000 format. Unique across student accounts.</summary>
+    /// <summary>TMC student number in the 00-000000 format. Unique across student accounts.</summary>
     [StringLength(20)]
     public string? StudentId { get; set; }
 
-    /// <summary>Program the student is enrolled in (e.g. BSIT). Captured at sign-up.</summary>
-    [StringLength(20)]
+    /// <summary>
+    /// Program the student is enrolled in, stored as the full label
+    /// (e.g. "BSIT (Bachelor of Science in Information Technology)"). Captured at sign-up.
+    /// </summary>
+    [StringLength(80)]
     public string? CourseOrGrade { get; set; }
 
     /// <summary>Year level, 1st to 4th year. Captured at sign-up.</summary>
