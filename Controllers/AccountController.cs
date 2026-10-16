@@ -45,7 +45,6 @@ public class AccountController : AppController
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
-        LoadHeroStats();
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
@@ -91,7 +90,6 @@ public class AccountController : AppController
     public IActionResult Register()
     {
         if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
-        LoadHeroStats();
         return View(new RegisterViewModel());
     }
 
@@ -490,57 +488,6 @@ public class AccountController : AppController
         var code = TempData[DevOtpKey] as string;
         if (code != null) TempData.Keep(DevOtpKey);
         return code;
-    }
-
-    // ---------- Hero stats for the auth pages ----------
-    /// <summary>Loads figures from the most recent completed tryout into ViewData for the auth hero panel.</summary>
-    private void LoadHeroStats()
-    {
-        try
-        {
-            var now = DateTime.Now;
-            var schedule = Db.Schedules.AsNoTracking()
-                .Include(s => s.Sport)
-                .Where(s => !s.IsCancelled && s.EndAt < now)
-                .OrderByDescending(s => s.EndAt)
-                .FirstOrDefault();
-            if (schedule == null) return;
-
-            var applicants = Db.Applicants.AsNoTracking()
-                .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
-                .Where(a => a.TryoutScheduleId == schedule.Id)
-                .ToList();
-            var evaluations = applicants.SelectMany(a => a.Evaluations).ToList();
-            if (evaluations.Count == 0) return;
-
-            var criteria = evaluations
-                .SelectMany(e => e.Scores)
-                .GroupBy(s => s.Criterion?.Name ?? "Criterion")
-                .Select(g => (Label: g.Key, Avg: Math.Round(g.Average(s => (double)s.Value))))
-                .OrderBy(c => c.Label)
-                .Take(6)
-                .ToList();
-
-            ViewData["HeroStats"] = new AuthHeroStatsViewModel
-            {
-                SportName = schedule.Sport?.Name ?? "Tryout",
-                SportIcon = schedule.Sport?.Icon ?? "trophy",
-                ScheduleTitle = schedule.Title,
-                ScheduleDate = schedule.StartAt.ToString("MMM d, yyyy"),
-                Applicants = applicants.Count,
-                Evaluators = evaluations.Select(e => e.EvaluatorId).Distinct().Count(),
-                Evaluations = evaluations.Count,
-                Selected = applicants.Count(a => a.Status == SelectionStatus.Selected),
-                Slots = schedule.Sport?.Slots ?? 0,
-                QualifyingScore = schedule.Sport?.QualifyingScore ?? 75,
-                TopScore = Math.Round(evaluations.Max(e => e.Average), 1),
-                Criteria = criteria
-            };
-        }
-        catch
-        {
-            // The hero panel is decorative; never block the login or register page.
-        }
     }
 
     private async Task SignInAsync(AppUser user, bool remember)

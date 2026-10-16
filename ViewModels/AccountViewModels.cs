@@ -105,27 +105,6 @@ public class AccountStatusViewModel
     public bool IsFullyVerified => EmailVerified && IdVerified;
 }
 
-/// <summary>Real figures from the most recent tryout, shown on the auth pages' hero panel.</summary>
-public class AuthHeroStatsViewModel
-{
-    public string SportName { get; set; } = string.Empty;
-    public string SportIcon { get; set; } = "trophy";
-    public string ScheduleTitle { get; set; } = string.Empty;
-    public string ScheduleDate { get; set; } = string.Empty;
-    public int Applicants { get; set; }
-    public int Evaluators { get; set; }
-    public int Evaluations { get; set; }
-    public int Selected { get; set; }
-    public int Slots { get; set; }
-    public int QualifyingScore { get; set; }
-    public double? TopScore { get; set; }
-
-    /// <summary>Per-criterion averages (0-100) across all evaluations of the tryout.</summary>
-    public List<(string Label, double Avg)> Criteria { get; set; } = new();
-
-    public bool HasData => Evaluations > 0;
-}
-
 public class ProfileViewModel
 {
     public string Username { get; set; } = string.Empty;

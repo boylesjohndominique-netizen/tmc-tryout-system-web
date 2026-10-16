@@ -1,7 +1,6 @@
 @{
     var heroTitle = ViewData["HeroTitle"] as string ?? "Fair, transparent varsity tryouts.";
     var heroSubtitle = ViewData["HeroSubtitle"] as string ?? "Register, evaluate and select athletes in one place.";
-    var heroStats = ViewData["HeroStats"] as AuthHeroStatsViewModel;
 }
 <!DOCTYPE html>
 <html lang="en" class="auth-html">
@@ -20,85 +19,16 @@
 <body class="auth-body">
 <div class="auth-shell">
     <section class="auth-hero">
-        <svg class="court-lines" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <g fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="60" y="80" width="480" height="640" rx="6" />
-                <line x1="60" y1="400" x2="540" y2="400" />
-                <circle cx="300" cy="400" r="84" />
-                <path d="M190 80 v150 h220 v-150" />
-                <path d="M190 720 v-150 h220 v150" />
-                <path d="M228 230 a72 72 0 0 0 144 0" />
-                <path d="M228 570 a72 72 0 0 1 144 0" />
-            </g>
-        </svg>
-
         <div class="auth-hero-inner">
-            <div class="brand brand-light">
-                <span class="brand-mark brand-mark-logo"><img src="~/pictures/logo-emblem.png" alt="" /></span>
-                <span class="brand-text">
-                    <strong>TMC Tryouts</strong>
-                    <small>Trinidad Municipal College</small>
-                </span>
-            </div>
+            <figure class="auth-hero-art">
+                <img src="~/pictures/Trinidad College Sports Try-Out Emblem.png"
+                     alt="Trinidad Municipal College Sports Try-Out System emblem" />
+            </figure>
 
             <div class="hero-copy">
                 <h1>@heroTitle</h1>
                 <p>@heroSubtitle</p>
             </div>
-
-            @if (heroStats is { HasData: true })
-            {
-                <div class="scorecard scorecard-real">
-                    <div class="scorecard-head">
-                        <span class="avatar avatar-gold">@(heroStats.SportName.Length >= 2 ? heroStats.SportName[..2].ToUpperInvariant() : heroStats.SportName.ToUpperInvariant())</span>
-                        <div>
-                            <strong>Latest tryout results</strong>
-                            <small>@heroStats.SportName &middot; @heroStats.ScheduleDate</small>
-                        </div>
-                        <span class="score-total">@heroStats.TopScore?.ToString("0.0")</span>
-                    </div>
-                    <div class="sc-stats">
-                        <div><b>@heroStats.Applicants</b><small>applicants</small></div>
-                        <div><b>@heroStats.Evaluators</b><small>evaluators</small></div>
-                        <div><b>@heroStats.Selected<span class="sc-slot-total">/@heroStats.Slots</span></b><small>selected</small></div>
-                    </div>
-                    @foreach (var (label, avg) in heroStats.Criteria)
-                    {
-                        var pct = (int)Math.Min(100, Math.Round(avg));
-                        <div class="sc-row"><span>@label</span><div class="sc-bar"><i style="width:@(pct)%"></i></div><b>@avg</b></div>
-                    }
-                    <div class="scorecard-foot">
-                        @if (heroStats.Selected > 0)
-                        {
-                            <i class="bi bi-check-circle-fill"></i> <text>@heroStats.Selected of @heroStats.Slots roster slots filled</text>
-                        }
-                        else
-                        {
-                            <i class="bi bi-info-circle-fill"></i> <text>Qualifying score: @heroStats.QualifyingScore</text>
-                        }
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="scorecard" aria-hidden="true">
-                    <div class="scorecard-head">
-                        <span class="avatar avatar-gold">MS</span>
-                        <div>
-                            <strong>Sample scorecard</strong>
-                            <small>Basketball &middot; Final round</small>
-                        </div>
-                        <span class="score-total">86.4</span>
-                    </div>
-                    <div class="sc-row"><span>Skill</span><div class="sc-bar"><i style="width:90%"></i></div><b>90</b></div>
-                    <div class="sc-row"><span>Speed</span><div class="sc-bar"><i style="width:84%"></i></div><b>84</b></div>
-                    <div class="sc-row"><span>Agility</span><div class="sc-bar"><i style="width:88%"></i></div><b>88</b></div>
-                    <div class="sc-row"><span>Endurance</span><div class="sc-bar"><i style="width:79%"></i></div><b>79</b></div>
-                    <div class="sc-row"><span>Teamwork</span><div class="sc-bar"><i style="width:92%"></i></div><b>92</b></div>
-                    <div class="sc-row"><span>Discipline</span><div class="sc-bar"><i style="width:85%"></i></div><b>85</b></div>
-                    <div class="scorecard-foot"><i class="bi bi-check-circle-fill"></i> Meets the qualifying score</div>
-                </div>
-            }
         </div>
     </section>
 
