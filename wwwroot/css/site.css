@@ -425,6 +425,30 @@ a { text-decoration: none; }
 .profile-head { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
 .profile-head h2 { margin: 0; font-size: 1.35rem; font-weight: 800; }
 
+/* ---------- Profile page (identity card + details) ---------- */
+.profile-card { overflow: hidden; }
+.profile-hero { height: 92px; background: linear-gradient(135deg, var(--navy), var(--blue)); }
+.profile-hero { position: relative; }
+.profile-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(255, 198, 41, .38), transparent 55%); }
+.profile-identity { text-align: center; padding: 0 1.4rem 1.1rem; }
+.profile-avatar { display: grid; position: relative; z-index: 1; width: 96px; height: 96px; margin: -48px auto .75rem; border: 4px solid var(--white); box-shadow: var(--shadow); font-size: 1.9rem; }
+.profile-identity h2 { font-size: 1.2rem; font-weight: 800; margin: 0 0 .4rem; }
+.profile-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: .85rem; }
+.profile-facts { margin: 1.1rem 0 0; text-align: left; }
+.profile-facts .fact { display: flex; align-items: center; gap: .7rem; padding: .6rem .1rem; border-top: 1px solid var(--line); }
+.profile-facts .fact:first-child { border-top: 0; }
+.profile-facts .fact > i { width: 1.15rem; text-align: center; color: var(--blue); font-size: 1.05rem; flex: none; }
+.profile-facts .fact .k { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
+.profile-facts .fact .v { display: block; font-weight: 600; word-break: break-word; }
+.profile-note { display: flex; gap: .5rem; text-align: left; margin-top: .9rem; padding: .6rem .75rem; border-radius: 10px; background: var(--gold-50); color: #6e5200; font-size: .82rem; font-weight: 500; }
+.profile-note > i { margin-top: .1rem; }
+.profile-picture-section { border-top: 1px solid var(--line); border-bottom: 0; }
+@media (max-width: 575.98px) {
+    .profile-hero { height: 76px; }
+    .profile-avatar { width: 84px; height: 84px; margin-top: -42px; font-size: 1.6rem; }
+    .profile-identity { padding: 0 1.1rem 1rem; }
+}
+
 .icon-tile { width: 46px; height: 46px; border-radius: 13px; background: var(--blue-50); color: var(--blue); display: grid; place-items: center; font-size: 1.3rem; flex: none; }
 .icon-tile.gold { background: var(--gold); color: var(--navy); }
 
