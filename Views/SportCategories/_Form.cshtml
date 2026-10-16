@@ -1,0 +1,119 @@
+@model CategoryFormViewModel
+
+<div class="form-section">
+    <h3><i class="bi bi-collection"></i>Category details</h3>
+    <p>Sports in this category are scored on the criteria you add below.</p>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" placeholder="e.g. Physical sports" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="DisplayOrder" class="form-label"></label>
+            <input asp-for="DisplayOrder" type="number" min="0" class="form-control" />
+            <div class="form-text">Lower numbers appear first.</div>
+            <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sports using it</label>
+            <input value="@Model.SportCount" class="form-control" disabled />
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" rows="2" class="form-control" placeholder="Short description of this group of sports"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Icon</label>
+            <div class="icon-picker">
+                @foreach (var icon in UiHelpers.CategoryIcons)
+                {
+                    <input type="radio" name="Icon" id="cat-icon-@icon" value="@icon" checked="@(Model.Icon == icon)" />
+                    <label for="cat-icon-@icon" title="@icon"><i class="bi bi-@icon"></i></label>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <h3><i class="bi bi-sliders"></i>Performance criteria</h3>
+    <p>Each criterion is scored 0 to 100. The applicant's overall score is the average of these criteria.</p>
+    <span asp-validation-for="Criteria" class="text-danger d-block mb-2"></span>
+    <div id="criteriaList">
+        @for (int i = 0; i < Model.Criteria.Count; i++)
+        {
+            <div class="row g-2 align-items-end mb-2" data-criteria-row>
+                <input type="hidden" name="Criteria[@i].Id" value="@Model.Criteria[i].Id" data-criterion-id />
+                <div class="col-md-6">
+                    @if (i == 0)
+                    {
+                        <label class="form-label">Criterion name</label>
+                    }
+                    <input name="Criteria[@i].Name" value="@Model.Criteria[i].Name" class="form-control" placeholder="e.g. Speed" data-criterion-name />
+                </div>
+                <div class="col-md-4">
+                    @if (i == 0)
+                    {
+                        <label class="form-label">Icon</label>
+                    }
+                    <select name="Criteria[@i].Icon" class="form-select" data-criterion-icon>
+                        @foreach (var icon in UiHelpers.CriterionIcons)
+                        {
+                            <option value="@icon" selected="@(Model.Criteria[i].Icon == icon)">@icon</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-light-x w-100" data-remove-criterion title="Remove"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+        }
+    </div>
+    <button type="button" class="btn btn-light-x btn-sm mt-2" id="addCriterion"><i class="bi bi-plus-lg me-1"></i>Add criterion</button>
+</div>
+
+<script>
+    (function () {
+        var list = document.getElementById('criteriaList');
+        var add = document.getElementById('addCriterion');
+        if (!list || !add) return;
+
+        function reindex() {
+            var rows = list.querySelectorAll('[data-criteria-row]');
+            rows.forEach(function (row, i) {
+                row.querySelector('[data-criterion-id]').name = 'Criteria[' + i + '].Id';
+                row.querySelector('[data-criterion-name]').name = 'Criteria[' + i + '].Name';
+                row.querySelector('[data-criterion-icon]').name = 'Criteria[' + i + '].Icon';
+            });
+        }
+
+        add.addEventListener('click', function () {
+            var rows = list.querySelectorAll('[data-criteria-row]');
+            var template = rows[rows.length - 1];
+            if (!template) return;
+            var clone = template.cloneNode(true);
+            clone.querySelector('[data-criterion-id]').value = '0';
+            clone.querySelector('[data-criterion-name]').value = '';
+            list.appendChild(clone);
+            reindex();
+            clone.querySelector('[data-criterion-name]').focus();
+        });
+
+        list.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-remove-criterion]');
+            if (!btn) return;
+            var rows = list.querySelectorAll('[data-criteria-row]');
+            if (rows.length <= 1) {
+                var row = btn.closest('[data-criteria-row]');
+                row.querySelector('[data-criterion-name]').value = '';
+                row.querySelector('[data-criterion-id]').value = '0';
+                return;
+            }
+            btn.closest('[data-criteria-row]').remove();
+            reindex();
+        });
+    })();
+</script>

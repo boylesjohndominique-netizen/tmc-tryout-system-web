@@ -1,0 +1,56 @@
+@model CategoryListViewModel
+@{ ViewData["Title"] = "Sport categories"; }
+
+<div class="page-head">
+    <div>
+        <h1>Sport categories</h1>
+        <p>Categories decide how each sport is evaluated. Every category has its own set of performance criteria.</p>
+    </div>
+    <div class="page-actions"><a asp-action="Create" class="btn btn-gold"><i class="bi bi-plus-lg me-1"></i>Add category</a></div>
+</div>
+
+@if (Model.Categories.Count == 0)
+{
+    <div class="card-x">
+        <div class="empty-state">
+            <div class="icon-tile gold"><i class="bi bi-collection"></i></div>
+            <h3>No categories yet</h3>
+            <p>Add a category such as Physical, Mind or Esports, then choose it when creating a sport.</p>
+            <a asp-action="Create" class="btn btn-gold">Add a category</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var row in Model.Categories)
+        {
+            var c = row.Category;
+            <div class="col-md-6 col-xl-4">
+                <div class="card-x sport-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-tile gold"><i class="bi bi-@c.Icon"></i></div>
+                        <div class="flex-grow-1">
+                            <h3>@c.Name</h3>
+                            <span class="badge-soft badge-soft-info"><i class="bi bi-dribbble"></i>@row.SportCount sport@(row.SportCount == 1 ? "" : "s")</span>
+                        </div>
+                        <div class="actions">
+                            <a asp-action="Edit" asp-route-id="@c.Id" class="btn-action" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" data-confirm="Remove @c.Name?">
+                                <button type="submit" class="btn-action danger" title="Remove"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <p>@(string.IsNullOrWhiteSpace(c.Description) ? "No description yet." : c.Description)</p>
+                    <div class="text-muted small mb-1">@c.Criteria.Count evaluation criteria</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var cri in c.Criteria.OrderBy(x => x.DisplayOrder))
+                        {
+                            <span class="staff-chip"><i class="bi bi-@cri.Icon"></i>@cri.Name</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
