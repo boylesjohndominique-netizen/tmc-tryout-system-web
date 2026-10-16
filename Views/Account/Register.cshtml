@@ -7,7 +7,7 @@
 }
 
 <h2>Create your student account</h2>
-<p class="lead-sm">Have your student ID ready — you will photograph the front and back to get verified.</p>
+<p class="lead-sm">Have your student ID ready for verification.</p>
 
 <partial name="_Alerts" />
 
@@ -35,7 +35,7 @@
     <div class="mb-3">
         <label asp-for="StudentId" class="form-label"></label>
         <input asp-for="StudentId" class="form-control" placeholder="@UiHelpers.StudentIdExample" inputmode="numeric" autocomplete="off" />
-        <div class="form-text">@UiHelpers.StudentIdHint Your first name is the name shown across the system.</div>
+        <div class="form-text">@UiHelpers.StudentIdHint</div>
         <span asp-validation-for="StudentId" class="text-danger"></span>
     </div>
 
@@ -54,7 +54,7 @@
                 <option value="">Select</option>
                 @foreach (var y in UiHelpers.YearLevels) { <option value="@y">@y</option> }
             </select>
-            <div class="form-text">TMC tryouts are open to 1st to 4th year.</div>
+            <div class="form-text">Open to 1st to 4th year.</div>
             <span asp-validation-for="YearLevel" class="text-danger"></span>
         </div>
     </div>
@@ -72,7 +72,7 @@
                 <span class="id-capture-note" data-capture-note></span>
             </div>
         </div>
-        <div class="form-text">Lay the ID flat, fill the frame, keep it in focus and use good light. No blur, no filters and no black-and-white.</div>
+        <div class="form-text">Lay flat, fill the frame, use good lighting. No blur or filters.</div>
         <span asp-validation-for="IdPictureFront" class="text-danger"></span>
     </div>
 
@@ -89,14 +89,14 @@
                 <span class="id-capture-note" data-capture-note></span>
             </div>
         </div>
-        <div class="form-text">The back usually carries the signature and school year. Make sure it is just as sharp.</div>
+        <div class="form-text">Photograph the back just as clearly.</div>
         <span asp-validation-for="IdPictureBack" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="Email" class="form-label"></label>
         <input asp-for="Email" class="form-control" autocomplete="email" placeholder="you@example.com" />
-        <div class="form-text">We send a 6-digit code here. Verify it before you can enter the site.</div>
+        <div class="form-text">We'll send a 6-digit verification code here.</div>
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
