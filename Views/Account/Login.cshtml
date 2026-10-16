@@ -5,7 +5,6 @@
 }
 
 <h2>Welcome back</h2>
-<p class="lead-sm">Students sign in with their email or student ID. Staff use their username.</p>
 
 <partial name="_Alerts" />
 
@@ -14,10 +13,10 @@
     <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
 
     <div class="mb-3">
-        <label asp-for="Identifier" class="form-label"></label>
+        <label asp-for="Identifier" class="form-label">Email, ID or username</label>
         <div class="input-icon">
             <i class="bi bi-person"></i>
-            <input asp-for="Identifier" class="form-control" autocomplete="username" autofocus placeholder="you@example.com, 24-000123 or username" />
+            <input asp-for="Identifier" class="form-control" autocomplete="username" autofocus />
         </div>
         <span asp-validation-for="Identifier" class="text-danger"></span>
     </div>
@@ -26,7 +25,7 @@
         <label asp-for="Password" class="form-label">Password</label>
         <div class="input-icon">
             <i class="bi bi-lock"></i>
-            <input asp-for="Password" id="loginPassword" class="form-control" autocomplete="current-password" placeholder="Enter your password" />
+            <input asp-for="Password" id="loginPassword" class="form-control" autocomplete="current-password" />
             <button type="button" class="pw-toggle" data-toggle-password="#loginPassword" aria-label="Show or hide password"><i class="bi bi-eye"></i></button>
         </div>
         <span asp-validation-for="Password" class="text-danger"></span>
@@ -34,13 +33,13 @@
 
     <div class="form-check mb-4">
         <input asp-for="RememberMe" class="form-check-input" />
-        <label asp-for="RememberMe" class="form-check-label">Keep me signed in on this device</label>
+        <label asp-for="RememberMe" class="form-check-label">Keep me signed in</label>
     </div>
 
     <button type="submit" class="btn btn-gold w-100 py-2"><i class="bi bi-box-arrow-in-right me-1"></i>Sign in</button>
 </form>
 
 <p class="text-center mt-4 mb-0 text-muted">
-    New student-athlete? <a asp-action="Register" class="fw-semibold">Create an account</a>
+    New student? <a asp-action="Register" class="fw-semibold">Create an account</a>
 </p>
 

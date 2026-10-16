@@ -1,6 +1,6 @@
 @{
-    var heroTitle = ViewData["HeroTitle"] as string ?? "Every tryout, scored fairly and decided clearly.";
-    var heroSubtitle = ViewData["HeroSubtitle"] as string ?? "Register, evaluate and select varsity athletes in one place, from the first sign-up to the final roster.";
+    var heroTitle = ViewData["HeroTitle"] as string ?? "Fair, transparent varsity tryouts.";
+    var heroSubtitle = ViewData["HeroSubtitle"] as string ?? "Register, evaluate and select athletes in one place.";
     var heroStats = ViewData["HeroStats"] as AuthHeroStatsViewModel;
 }
 <!DOCTYPE html>
@@ -44,12 +44,6 @@
             <div class="hero-copy">
                 <h1>@heroTitle</h1>
                 <p>@heroSubtitle</p>
-                <div class="hero-chips">
-                    <span class="hero-chip"><i class="bi bi-clipboard2-check"></i> Digital evaluation sheets</span>
-                    <span class="hero-chip"><i class="bi bi-graph-up-arrow"></i> Live scoring &amp; analytics</span>
-                    <span class="hero-chip"><i class="bi bi-trophy"></i> Transparent final rosters</span>
-                    <span class="hero-chip"><i class="bi bi-people"></i> For admins, coaches &amp; students</span>
-                </div>
             </div>
 
             @if (heroStats is { HasData: true })
