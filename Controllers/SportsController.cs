@@ -24,6 +24,7 @@ public class SportsController : AppController
         var allowed = await AllowedSportIdsAsync();
         var sports = await Db.Sports
             .ScopeTo(allowed)
+            .Include(s => s.Category)
             .Include(s => s.Staff).ThenInclude(x => x.User)
             .AsNoTracking()
             .OrderBy(s => s.Name)
@@ -53,6 +54,7 @@ public class SportsController : AppController
         if (!CanAccessSport(allowed, id)) return Forbid();
 
         var sport = await Db.Sports
+            .Include(s => s.Category).ThenInclude(c => c!.Criteria)
             .Include(s => s.Staff).ThenInclude(x => x.User)
             .Include(s => s.Schedules)
             .AsNoTracking()
@@ -78,7 +80,7 @@ public class SportsController : AppController
     public async Task<IActionResult> Create()
     {
         var model = new SportFormViewModel();
-        await LoadStaffAsync(model);
+        await LoadFormOptionsAsync(model);
         return View(model);
     }
 
@@ -89,7 +91,7 @@ public class SportsController : AppController
         await ValidateAsync(model);
         if (!ModelState.IsValid)
         {
-            await LoadStaffAsync(model);
+            await LoadFormOptionsAsync(model);
             return View(model);
         }
 
@@ -120,12 +122,13 @@ public class SportsController : AppController
             Name = sport.Name,
             Description = sport.Description,
             Icon = sport.Icon,
+            SportCategoryId = sport.SportCategoryId,
             QualifyingScore = sport.QualifyingScore,
             Slots = sport.Slots,
             IsActive = sport.IsActive,
             StaffIds = sport.Staff.Select(x => x.UserId).ToList()
         };
-        await LoadStaffAsync(model);
+        await LoadFormOptionsAsync(model);
         return View(model);
     }
 
@@ -140,7 +143,7 @@ public class SportsController : AppController
         await ValidateAsync(model);
         if (!ModelState.IsValid)
         {
-            await LoadStaffAsync(model);
+            await LoadFormOptionsAsync(model);
             return View(model);
         }
 
@@ -186,6 +189,8 @@ public class SportsController : AppController
         }
         if (!UiHelpers.SportIcons.Contains(model.Icon))
             model.Icon = "trophy";
+        if (!model.SportCategoryId.HasValue || !await Db.SportCategories.AnyAsync(c => c.Id == model.SportCategoryId.Value))
+            ModelState.AddModelError(nameof(model.SportCategoryId), "Choose a valid category.");
     }
 
     private static void Apply(Sport sport, SportFormViewModel model)
@@ -193,9 +198,19 @@ public class SportsController : AppController
         sport.Name = model.Name.Trim();
         sport.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
         sport.Icon = model.Icon;
+        sport.SportCategoryId = model.SportCategoryId;
         sport.QualifyingScore = model.QualifyingScore;
         sport.Slots = model.Slots;
         sport.IsActive = model.IsActive;
+    }
+
+    private async Task LoadFormOptionsAsync(SportFormViewModel model)
+    {
+        await LoadStaffAsync(model);
+        model.Categories = await Db.SportCategories
+            .AsNoTracking()
+            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name)
+            .ToListAsync();
     }
 
     private async Task LoadStaffAsync(SportFormViewModel model)

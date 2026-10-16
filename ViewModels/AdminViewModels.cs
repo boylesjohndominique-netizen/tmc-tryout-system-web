@@ -76,6 +76,10 @@ public class SportFormViewModel
 
     public string Icon { get; set; } = "trophy";
 
+    [Required(ErrorMessage = "Choose a category.")]
+    [Display(Name = "Category")]
+    public int? SportCategoryId { get; set; }
+
     [Display(Name = "Qualifying score")]
     [Range(0, 100, ErrorMessage = "The qualifying score must be between 0 and 100.")]
     public int QualifyingScore { get; set; } = 75;
@@ -88,6 +92,7 @@ public class SportFormViewModel
 
     public List<int> StaffIds { get; set; } = new();
     public List<AppUser> AvailableStaff { get; set; } = new();
+    public List<SportCategory> Categories { get; set; } = new();
 }
 
 public class SportDetailsViewModel

@@ -39,6 +39,10 @@ else
                         <div class="icon-tile gold"><i class="bi bi-@s.Icon"></i></div>
                         <div class="flex-grow-1">
                             <h3>@s.Name</h3>
+                            @if (s.Category != null)
+                            {
+                                <span class="badge-soft badge-soft-info"><i class="bi bi-@s.Category.Icon"></i>@s.Category.Name</span>
+                            }
                             @if (s.IsActive) { <span class="badge-soft badge-soft-success">Open for registration</span> }
                             else { <span class="badge-soft badge-soft-muted">Inactive</span> }
                         </div>

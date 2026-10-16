@@ -9,6 +9,22 @@
             <input asp-for="Name" class="form-control" placeholder="e.g. Basketball" />
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
+        <div class="col-md-6">
+            <label asp-for="SportCategoryId" class="form-label"></label>
+            <select asp-for="SportCategoryId" class="form-select" data-sport-category>
+                <option value="">Choose a category…</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id" data-icon="@c.Icon">@c.Name</option>
+                }
+            </select>
+            <div class="form-text">The category decides how this sport is evaluated.</div>
+            <span asp-validation-for="SportCategoryId" class="text-danger"></span>
+            @if (Model.Categories.Count == 0)
+            {
+                <div class="form-text text-warning">No categories yet. <a asp-controller="SportCategories" asp-action="Create">Add one first</a>.</div>
+            }
+        </div>
         <div class="col-md-3">
             <label asp-for="QualifyingScore" class="form-label"></label>
             <input asp-for="QualifyingScore" type="number" min="0" max="100" class="form-control" />

@@ -12,6 +12,10 @@
             <div class="icon-tile gold"><i class="bi bi-@Model.Sport.Icon"></i></div>
             <div>
                 <h1>@Model.Sport.Name</h1>
+                @if (Model.Sport.Category != null)
+                {
+                    <span class="badge-soft badge-soft-info"><i class="bi bi-@Model.Sport.Category.Icon"></i>@Model.Sport.Category.Name</span>
+                }
                 @if (Model.Sport.IsActive) { <span class="badge-soft badge-soft-success">Open for registration</span> }
                 else { <span class="badge-soft badge-soft-muted">Inactive</span> }
             </div>
@@ -42,6 +46,25 @@
         <div class="card-x mb-3">
             <div class="card-x-head"><h2><i class="bi bi-info-circle"></i>About</h2></div>
             <div class="card-x-body">@(string.IsNullOrWhiteSpace(Model.Sport.Description) ? "No description yet." : Model.Sport.Description)</div>
+        </div>
+        <div class="card-x mb-3">
+            <div class="card-x-head"><h2><i class="bi bi-sliders"></i>Evaluation criteria</h2></div>
+            <div class="card-x-body">
+                @if (Model.Sport.Category == null || Model.Sport.Category.Criteria.Count == 0)
+                {
+                    <span class="text-muted">No criteria defined for this sport's category yet.</span>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">Applicants are scored 0 to 100 on each of these, from the @Model.Sport.Category.Name category.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var cri in Model.Sport.Category.Criteria.OrderBy(c => c.DisplayOrder))
+                        {
+                            <span class="staff-chip"><i class="bi bi-@cri.Icon"></i>@cri.Name</span>
+                        }
+                    </div>
+                }
+            </div>
         </div>
         <div class="card-x">
             <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>Coaches and evaluators</h2></div>
