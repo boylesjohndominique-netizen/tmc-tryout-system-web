@@ -10,8 +10,8 @@ public class ApplicantFormViewModel
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Enter the student ID.")]
-    [StringLength(20, MinimumLength = 20, ErrorMessage = "The student ID must follow the format 24-020298(00-000000).")]
-    [RegularExpression(UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 24-020298(00-000000): two digits, a dash, six digits, then the campus code in parentheses.")]
+    [StringLength(10, MinimumLength = 7, ErrorMessage = "The student ID must follow the format 00-0000.")]
+    [RegularExpression(UiHelpers.StudentIdPattern, ErrorMessage = "Use the format 00-0000: two digits, a dash, then four digits.")]
     [Display(Name = "Student ID")]
     public string StudentId { get; set; } = string.Empty;
 
@@ -97,6 +97,36 @@ public class ApplicantFormViewModel
 
     /// <summary>True when staff are filling the form on behalf of a student.</summary>
     public bool ByStaff { get; set; }
+}
+
+/// <summary>
+/// The Applicant records page lists student accounts, not tryout entries: a student shows up
+/// the moment they sign up so the athletics office can verify them before they join a tryout.
+/// </summary>
+public class StudentRecordListViewModel
+{
+    public List<StudentRecordRow> Rows { get; set; } = new();
+    public string? Search { get; set; }
+    public string? Verification { get; set; }
+    public string? Course { get; set; }
+    public List<string> Courses { get; set; } = new();
+    public int TotalBeforeFilter { get; set; }
+    public int AwaitingApproval { get; set; }
+    public int VerifiedCount { get; set; }
+}
+
+public class StudentRecordRow
+{
+    public AppUser Student { get; set; } = null!;
+    public int TryoutCount { get; set; }
+}
+
+/// <summary>A single student account: identity, ID photos for approval, and their tryout entries.</summary>
+public class StudentAccountViewModel
+{
+    public AppUser Student { get; set; } = null!;
+    public List<Applicant> Registrations { get; set; } = new();
+    public bool CanVerify { get; set; }
 }
 
 public class ApplicantListViewModel

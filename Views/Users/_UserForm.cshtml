@@ -31,12 +31,12 @@
         <div class="col-md-6">
             <label asp-for="Role" class="form-label"></label>
             <select asp-for="Role" class="form-select">
-                @foreach (var r in Roles.All)
+                @foreach (var r in Roles.StaffRoles)
                 {
                     <option value="@r">@r</option>
                 }
             </select>
-            <div class="form-text">Coaches and evaluators are assigned to sports from the Sports page.</div>
+            <div class="form-text">Staff accounts only. Coaches and evaluators are assigned to sports from the Sports page. Students create their own accounts.</div>
             <span asp-validation-for="Role" class="text-danger"></span>
         </div>
         <div class="col-12">

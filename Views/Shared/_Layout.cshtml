@@ -9,9 +9,11 @@
     bool isStudent = role == Roles.Student;
     bool isAdmin = role == Roles.Admin;
     bool canDecide = role == Roles.Admin || role == Roles.Coach;
+    bool emailVerified = User.FindFirst(VerificationClaims.EmailVerified)?.Value != "False";
+    bool idVerified = User.FindFirst(VerificationClaims.IdVerified)?.Value == "True";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="app-html">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,6 +46,7 @@
                 <a class="side-link @Active("Registration")" asp-controller="Registration" asp-action="Index"><i class="bi bi-person-vcard"></i><span class="side-label">My registration</span></a>
                 <a class="side-link @Active("Explore")" asp-controller="Explore" asp-action="Index"><i class="bi bi-compass"></i><span class="side-label">Explore sports</span></a>
                 <a class="side-link @Active("Schedules")" asp-controller="Schedules" asp-action="Index"><i class="bi bi-calendar-event"></i><span class="side-label">Tryout schedules</span></a>
+                <a class="side-link @Active("Account") @(idVerified ? "" : "side-link-alert")" asp-controller="Account" asp-action="VerificationStatus"><i class="bi bi-shield-check"></i><span class="side-label">Account verification</span></a>
             }
             else
             {
@@ -97,6 +100,14 @@
             <button class="btn btn-icon d-lg-none" type="button" id="sidebarToggle" aria-label="Open menu"><i class="bi bi-list"></i></button>
             <div class="topbar-title">@ViewData["Title"]</div>
             <div class="topbar-right">
+                @if (isStudent && !emailVerified)
+                {
+                    <a asp-controller="Account" asp-action="VerifyEmail" class="badge-soft badge-soft-danger text-decoration-none"><i class="bi bi-envelope-exclamation-fill"></i>Email not verified</a>
+                }
+                else if (isStudent && !idVerified)
+                {
+                    <a asp-controller="Account" asp-action="VerificationStatus" class="badge-soft badge-soft-warning text-decoration-none"><i class="bi bi-hourglass-split"></i>Awaiting ID approval</a>
+                }
                 <span class="role-chip"><i class="bi bi-@UiHelpers.RoleIcon(role)"></i>@role</span>
                 <span class="today d-none d-md-inline">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</span>
                 <div class="dropdown rt-bell-wrap">

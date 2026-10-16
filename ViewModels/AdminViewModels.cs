@@ -18,7 +18,7 @@ public class UserFormViewModel
     [RegularExpression(@"^[A-Za-z0-9._-]+$", ErrorMessage = "Use letters, numbers, dots, dashes or underscores only.")]
     public string Username { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Enter the full name."), StringLength(100)]
+    [Required(ErrorMessage = "Enter the full name."), StringLength(200)]
     [Display(Name = "Full name")]
     public string FullName { get; set; } = string.Empty;
 

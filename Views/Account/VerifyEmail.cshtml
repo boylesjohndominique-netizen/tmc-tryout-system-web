@@ -1,0 +1,48 @@
+@model VerifyEmailViewModel
+@{
+    ViewData["Title"] = "Verify your email";
+    Layout = "_AuthLayout";
+    ViewData["HeroTitle"] = "One code and you are in.";
+    ViewData["HeroSubtitle"] = "We verify every student email so results, schedules and notifications reach the right person.";
+}
+
+<h2>Check your email</h2>
+<p class="lead-sm">
+    Enter the 6-digit code we sent to
+    <strong>@(string.IsNullOrEmpty(Model.Email) ? "your email address" : Model.Email)</strong>.
+    You cannot open the rest of the site until your email is verified.
+</p>
+
+<partial name="_Alerts" />
+
+@if (!string.IsNullOrEmpty(Model.DevCode))
+{
+    <div class="alert alert-info alert-x" role="alert">
+        <i class="bi bi-tools"></i>
+        <div>Email is not configured, so here is the code for local testing: <strong>@Model.DevCode</strong></div>
+    </div>
+}
+
+<form asp-action="VerifyEmail" method="post" data-once>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
+
+    <div class="mb-4">
+        <label asp-for="Code" class="form-label"></label>
+        <input asp-for="Code" class="form-control otp-input" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="6" pattern="\d{6}" placeholder="000000" autofocus />
+        <span asp-validation-for="Code" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-gold w-100 py-2"><i class="bi bi-shield-check me-1"></i>Verify email</button>
+</form>
+
+<form asp-action="ResendOtp" method="post" class="mt-3 text-center">
+    <button type="submit" class="btn btn-link p-0 fw-semibold" @(Model.SecondsToResend > 0 ? "disabled" : "")>
+        <i class="bi bi-arrow-clockwise me-1"></i>@(Model.SecondsToResend > 0 ? $"Resend code in {Model.SecondsToResend}s" : "Resend the code")
+    </button>
+    <div class="form-text">Codes expire after 10 minutes.</div>
+</form>
+
+<form asp-action="Logout" method="post" class="mt-2 text-center">
+    <button type="submit" class="btn btn-link p-0 text-muted small">Use a different account</button>
+</form>

@@ -29,15 +29,18 @@ public static class UiHelpers
     };
 
     /// <summary>
-    /// TMC student number format, e.g. 24-020298(00-000000): two-digit year, six digits,
-    /// then the campus/program code in parentheses.
+    /// TMC student number format, e.g. 24-0202: two-digit year, a dash, then four digits.
     /// </summary>
-    public const string StudentIdPattern = @"^\d{2}-\d{6}\(\d{2}-\d{6}\)$";
+    public const string StudentIdPattern = @"^\d{2}-\d{4}$";
 
-    public const string StudentIdExample = "24-020298(00-000000)";
+    public const string StudentIdExample = "24-0202";
 
     public static string StudentIdHint =>
-        $"Format: {StudentIdExample} — year and number, then the campus code in parentheses.";
+        $"Format: {StudentIdExample} — two-digit year, a dash, then four digits.";
+
+    /// <summary>Trims and upper-cases a student ID so lookups and storage always match.</summary>
+    public static string NormalizeStudentId(string? value) =>
+        (value ?? string.Empty).Trim().ToUpperInvariant();
 
     public static string StatusBadge(SelectionStatus s) => s switch
     {

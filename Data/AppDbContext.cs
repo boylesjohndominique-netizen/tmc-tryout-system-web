@@ -17,6 +17,9 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder b)
     {
         b.Entity<AppUser>().HasIndex(u => u.Username).IsUnique();
+        // Students sign in with their student ID, so it must stay unique. MySQL allows many NULLs
+        // in a unique index, which keeps staff accounts (no student ID) unaffected.
+        b.Entity<AppUser>().HasIndex(u => u.StudentId).IsUnique();
 
         b.Entity<Sport>().HasIndex(s => s.Name).IsUnique();
 

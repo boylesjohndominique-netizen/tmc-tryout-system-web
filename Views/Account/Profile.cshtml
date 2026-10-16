@@ -24,20 +24,87 @@
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Username</label>
-                        <input class="form-control" value="@Model.Username" disabled />
-                        <div class="form-text">Usernames cannot be changed.</div>
+                        @if (Model.IsStudent)
+                        {
+                            <label class="form-label">Student ID</label>
+                            <input class="form-control" value="@(Model.StudentId ?? "-")" disabled />
+                            <div class="form-text">Sign in with this ID or your email. It cannot be changed here.</div>
+                        }
+                        else
+                        {
+                            <label class="form-label">Username</label>
+                            <input class="form-control" value="@Model.Username" disabled />
+                            <div class="form-text">Usernames cannot be changed.</div>
+                        }
                     </div>
                     <div class="col-md-6">
                         <label asp-for="FullName" class="form-label"></label>
                         <input asp-for="FullName" class="form-control" />
                         <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
+                    @if (Model.IsStudent)
+                    {
+                        <div class="col-md-6">
+                            <label asp-for="CourseOrGrade" class="form-label"></label>
+                            <select asp-for="CourseOrGrade" class="form-select">
+                                <option value="">Select your course</option>
+                                @foreach (var c in UiHelpers.Courses) { <option value="@c">@c</option> }
+                            </select>
+                            <span asp-validation-for="CourseOrGrade" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="YearLevel" class="form-label"></label>
+                            <select asp-for="YearLevel" class="form-select">
+                                <option value="">Select</option>
+                                @foreach (var y in UiHelpers.YearLevels) { <option value="@y">@y</option> }
+                            </select>
+                            <span asp-validation-for="YearLevel" class="text-danger"></span>
+                        </div>
+                    }
                     <div class="col-12">
                         <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                        @if (Model.IsStudent)
+                        {
+                            <input class="form-control" value="@Model.Email" disabled />
+                            <div class="form-text">Your verified email is your sign-in address. Contact the athletics office to change it.</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        }
                     </div>
+                    @if (Model.IsStudent)
+                    {
+                        <div class="col-12">
+                            <label class="form-label">Account verification</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (Model.EmailVerified)
+                                {
+                                    <span class="badge-soft badge-soft-success"><i class="bi bi-envelope-check-fill"></i>Email verified</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft badge-soft-danger"><i class="bi bi-envelope-exclamation-fill"></i>Email not verified</span>
+                                }
+                                @if (Model.IdVerified)
+                                {
+                                    <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Student ID approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Student ID awaiting approval</span>
+                                }
+                            </div>
+                            @if (!Model.IdVerified && !string.IsNullOrWhiteSpace(Model.VerificationRemarks))
+                            {
+                                <div class="form-text"><i class="bi bi-chat-left-text me-1"></i>@Model.VerificationRemarks</div>
+                            }
+                            <div class="form-text">
+                                <a asp-action="VerificationStatus">View verification details</a>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
             <div class="form-actions">

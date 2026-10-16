@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TmcTryoutSystem.Data;
+using TmcTryoutSystem.Middleware;
+using TmcTryoutSystem.Models;
 using TmcTryoutSystem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,8 +36,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddScoped<ApplicantFormService>();
+builder.Services.AddScoped<AccountIdPictureService>();
+builder.Services.AddScoped<VerificationCodeService>();
 builder.Services.AddSingleton<IRealtimeNotifier, RealtimeNotifier>();
 builder.Services.AddSignalR();
+
+// ---------- Outgoing mail (student email verification codes) ----------
+var smtpOptions = builder.Configuration.GetSection("Smtp").Get<SmtpOptions>() ?? new SmtpOptions();
+builder.Services.AddSingleton(smtpOptions);
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
 // ---------- Forwarded headers (Vercel terminates TLS) ----------
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -63,24 +72,47 @@ builder.Services
         {
             OnValidatePrincipal = async context =>
             {
-                var idText = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-                var role = context.Principal?.FindFirstValue(ClaimTypes.Role);
+                var principal = context.Principal;
+                var idText = principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var role = principal?.FindFirstValue(ClaimTypes.Role);
                 var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
 
                 bool valid = false;
+                bool emailVerified = false, idVerified = false;
                 if (int.TryParse(idText, out var userId))
                 {
                     var user = await db.Users.AsNoTracking()
                         .Where(u => u.Id == userId)
-                        .Select(u => new { u.IsActive, u.Role })
+                        .Select(u => new { u.IsActive, u.Role, u.EmailVerified, u.IdVerified })
                         .FirstOrDefaultAsync();
                     valid = user != null && user.IsActive && user.Role == role;
+                    if (user != null)
+                    {
+                        emailVerified = user.EmailVerified;
+                        idVerified = user.IdVerified;
+                    }
                 }
 
                 if (!valid)
                 {
                     context.RejectPrincipal();
                     await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                // Keep the verification badges in the app shell accurate after an admin approves an account.
+                if (principal != null &&
+                    (principal.FindFirst(VerificationClaims.EmailVerified)?.Value != emailVerified.ToString() ||
+                     principal.FindFirst(VerificationClaims.IdVerified)?.Value != idVerified.ToString()))
+                {
+                    var claims = principal.Claims
+                        .Where(c => c.Type != VerificationClaims.EmailVerified && c.Type != VerificationClaims.IdVerified)
+                        .ToList();
+                    claims.Add(new Claim(VerificationClaims.EmailVerified, emailVerified.ToString()));
+                    claims.Add(new Claim(VerificationClaims.IdVerified, idVerified.ToString()));
+                    var identity = new ClaimsIdentity(claims, principal.Identity?.AuthenticationType, ClaimTypes.Name, ClaimTypes.Role);
+                    context.ReplacePrincipal(new ClaimsPrincipal(identity));
+                    context.ShouldRenew = true;
                 }
             }
         };
@@ -117,6 +149,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -1,0 +1,148 @@
+@model AccountStatusViewModel
+@{ ViewData["Title"] = "Account verification"; }
+
+<div class="page-head">
+    <div>
+        <h1>Account verification</h1>
+        <p>One step left before you can join a tryout.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Explore" asp-action="Index" class="btn btn-light-x"><i class="bi bi-compass me-1"></i>Browse sports</a>
+        <a asp-controller="Schedules" asp-action="Index" class="btn btn-light-x"><i class="bi bi-calendar-event me-1"></i>Tryout schedules</a>
+    </div>
+</div>
+
+<partial name="_Alerts" />
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card-x">
+            <div class="card-x-head">
+                <h2><i class="bi bi-person-vcard"></i>Your account</h2>
+                @if (Model.IsFullyVerified)
+                {
+                    <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                }
+                else
+                {
+                    <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Waiting for approval</span>
+                }
+            </div>
+            <div class="card-x-body">
+                <dl class="detail-list">
+                    <div><dt>Name</dt><dd>@Model.FullName</dd></div>
+                    <div><dt>Student ID</dt><dd>@(Model.StudentId ?? "-")</dd></div>
+                    <div><dt>Email</dt><dd>@(Model.Email ?? "-")</dd></div>
+                </dl>
+
+                <hr />
+
+                <ul class="verify-steps">
+                    <li class="done">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div><strong>Email verified</strong><small>Your email address is confirmed.</small></div>
+                    </li>
+                    <li class="@(Model.IdVerified ? "done" : "current")">
+                        <i class="bi @(Model.IdVerified ? "bi-check-circle-fill" : "bi-hourglass-split")"></i>
+                        <div>
+                            <strong>Student ID approved by the athletics office</strong>
+                            @if (Model.IdVerified)
+                            {
+                                <small>Approved @(Model.IdVerifiedAt.HasValue ? "on " + Model.IdVerifiedAt.Value.ToString("MMM d, yyyy") : "") — you can register for tryouts now.</small>
+                            }
+                            else
+                            {
+                                <small>An administrator checks your ID photos before you can submit a tryout entry. This is usually quick.</small>
+                            }
+                        </div>
+                    </li>
+                </ul>
+
+                @if (!Model.IdVerified && !string.IsNullOrWhiteSpace(Model.VerificationRemarks))
+                {
+                    <div class="alert alert-warning alert-x mt-3 mb-0" role="alert">
+                        <i class="bi bi-chat-left-text"></i>
+                        <div>@Model.VerificationRemarks</div>
+                    </div>
+                }
+
+                @if (Model.IsFullyVerified)
+                {
+                    <a asp-controller="Registration" asp-action="Create" class="btn btn-gold mt-3">
+                        <i class="bi bi-plus-lg me-1"></i>Register for a sport
+                    </a>
+                }
+                else
+                {
+                    <p class="text-muted small mt-3 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>While you wait you can still browse sports and check tryout schedules.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>ID photos on file</h2></div>
+            <div class="card-x-body">
+                @if (Model.HasIdPictures)
+                {
+                    <div class="d-flex gap-3">
+                        <div class="id-photo">
+                            <a href="@Model.IdPictureFrontPath" target="_blank"><img src="@Model.IdPictureFrontPath" alt="Student ID front" /></a>
+                            <small class="text-muted d-block text-center mt-1">Front</small>
+                        </div>
+                        <div class="id-photo">
+                            <a href="@Model.IdPictureBackPath" target="_blank"><img src="@Model.IdPictureBackPath" alt="Student ID back" /></a>
+                            <small class="text-muted d-block text-center mt-1">Back</small>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state"><h3>No photos</h3><p>Your ID photos are missing. Upload them again below.</p></div>
+                }
+
+                @if (!Model.IdVerified)
+                {
+                    <hr />
+                    <h3 class="h6 fw-bold">Upload new photos</h3>
+                    <p class="text-muted small">If your photos were rejected, retake them here. Lay the ID flat, keep it in focus and avoid filters.</p>
+                    <form asp-action="ReuploadId" method="post" enctype="multipart/form-data" data-once data-id-form class="d-flex flex-column gap-3">
+                        <div>
+                            <label class="form-label">Student ID - front</label>
+                            <div class="id-capture" data-id-capture>
+                                <input type="file" name="idPictureFront" id="reuploadFront" accept="image/*" class="id-capture-input" />
+                                <div class="id-capture-actions">
+                                    <button type="button" class="btn btn-sm btn-light-x" data-capture="camera"><i class="bi bi-camera me-1"></i>Take photo</button>
+                                    <button type="button" class="btn btn-sm btn-light-x" data-capture="gallery"><i class="bi bi-images me-1"></i>Choose from gallery</button>
+                                </div>
+                                <div class="id-capture-preview" data-capture-preview hidden>
+                                    <img alt="Front of student ID preview" />
+                                    <span class="id-capture-note" data-capture-note></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Student ID - back</label>
+                            <div class="id-capture" data-id-capture>
+                                <input type="file" name="idPictureBack" id="reuploadBack" accept="image/*" class="id-capture-input" />
+                                <div class="id-capture-actions">
+                                    <button type="button" class="btn btn-sm btn-light-x" data-capture="camera"><i class="bi bi-camera me-1"></i>Take photo</button>
+                                    <button type="button" class="btn btn-sm btn-light-x" data-capture="gallery"><i class="bi bi-images me-1"></i>Choose from gallery</button>
+                                </div>
+                                <div class="id-capture-preview" data-capture-preview hidden>
+                                    <img alt="Back of student ID preview" />
+                                    <span class="id-capture-note" data-capture-note></span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-gold" data-id-submit><i class="bi bi-upload me-1"></i>Upload new photos</button>
+                    </form>
+                    <script src="~/js/id-capture.js" asp-append-version="true"></script>
+                }
+            </div>
+        </div>
+    </div>
+</div>

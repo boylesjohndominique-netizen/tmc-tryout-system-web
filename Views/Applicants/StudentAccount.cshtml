@@ -1,0 +1,174 @@
+@model StudentAccountViewModel
+@{
+    var s = Model.Student;
+    ViewData["Title"] = s.DisplayName;
+    bool isAdmin = User.IsInRole(Roles.Admin);
+}
+
+<div class="page-head">
+    <div>
+        <div class="crumbs"><a asp-action="Index">Applicant records</a> / @s.DisplayName</div>
+        <div class="profile-head">
+            <span class="avatar avatar-lg avatar-gold">@s.Initials</span>
+            <div>
+                <h2>@s.DisplayName</h2>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                    <span class="badge-soft badge-soft-info"><i class="bi bi-mortarboard-fill"></i>Student</span>
+                    @if (!s.EmailVerified)
+                    {
+                        <span class="badge-soft badge-soft-danger"><i class="bi bi-envelope-exclamation-fill"></i>Email not verified</span>
+                    }
+                    else if (!s.IdVerified)
+                    {
+                        <span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Awaiting approval</span>
+                    }
+                    else
+                    {
+                        <span class="badge-soft badge-soft-success"><i class="bi bi-patch-check-fill"></i>Verified</span>
+                    }
+                    @if (!s.IsActive)
+                    {
+                        <span class="badge-soft badge-soft-muted"><i class="bi bi-slash-circle"></i>Deactivated</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="page-actions">
+            <form asp-action="ToggleStudentActive" asp-route-id="@s.Id" method="post" data-confirm="@(s.IsActive ? "Deactivate this student account? They will not be able to sign in." : "Reactivate this student account?")">
+                <button type="submit" class="btn @(s.IsActive ? "btn-outline-danger" : "btn-light-x")">
+                    <i class="bi @(s.IsActive ? "bi-slash-circle" : "bi-arrow-counterclockwise") me-1"></i>@(s.IsActive ? "Deactivate account" : "Reactivate account")
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<partial name="_Alerts" />
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card-x mb-3">
+            <div class="card-x-head"><h2><i class="bi bi-person-vcard"></i>Account details</h2></div>
+            <div class="card-x-body">
+                <dl class="detail-list">
+                    <div><dt>Full name</dt><dd>@s.FullName</dd></div>
+                    <div><dt>Student ID</dt><dd>@(string.IsNullOrEmpty(s.StudentId) ? "-" : s.StudentId)</dd></div>
+                    <div><dt>Course</dt><dd>@(string.IsNullOrEmpty(s.CourseOrGrade) ? "-" : s.CourseOrGrade)</dd></div>
+                    <div><dt>Year level</dt><dd>@(string.IsNullOrEmpty(s.YearLevel) ? "-" : s.YearLevel)</dd></div>
+                    <div><dt>Email</dt><dd>@(string.IsNullOrEmpty(s.Email) ? "-" : s.Email)</dd></div>
+                    <div><dt>Email verified</dt><dd>@(s.EmailVerified ? s.EmailVerifiedAt?.ToString("MMM d, yyyy h:mm tt") ?? "Yes" : "No")</dd></div>
+                    <div><dt>ID approved</dt><dd>@(s.IdVerified ? s.IdVerifiedAt?.ToString("MMM d, yyyy") ?? "Yes" : "Not yet")</dd></div>
+                    <div><dt>Signed up</dt><dd>@s.CreatedAt.ToString("MMM d, yyyy h:mm tt")</dd></div>
+                    <div><dt>Last sign-in</dt><dd>@(s.LastLoginAt.HasValue ? s.LastLoginAt.Value.ToString("MMM d, yyyy h:mm tt") : "Never")</dd></div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card-x">
+            <div class="card-x-head">
+                <h2><i class="bi bi-trophy"></i>Tryout entries</h2>
+                <span class="text-muted small">@Model.Registrations.Count recorded</span>
+            </div>
+            @if (Model.Registrations.Count == 0)
+            {
+                <div class="empty-state"><h3>No tryout entries yet</h3><p>The student has not registered for a sport. Verify the account so they can.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive-x">
+                    <table class="table table-x">
+                        <thead><tr><th>Sport</th><th>Tryout schedule</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                        @foreach (var a in Model.Registrations)
+                        {
+                            <tr>
+                                <td><i class="bi bi-@(a.Sport?.Icon ?? "trophy") text-primary me-1"></i>@a.Sport?.Name</td>
+                                <td>@(a.Schedule?.Title ?? "Not assigned")</td>
+                                <td><partial name="_StatusBadge" model="a.Status" /></td>
+                                <td>
+                                    <div class="actions">
+                                        <a asp-action="Details" asp-route-id="@a.Id" class="btn-action" title="Open registration"><i class="bi bi-eye"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-x">
+            <div class="card-x-head"><h2><i class="bi bi-person-badge"></i>ID verification</h2></div>
+            <div class="card-x-body">
+                <div class="d-flex gap-3 mb-3">
+                    <div class="id-photo">
+                        @if (!string.IsNullOrEmpty(s.IdPictureFrontPath))
+                        {
+                            <a href="@s.IdPictureFrontPath" target="_blank"><img src="@s.IdPictureFrontPath" alt="Student ID front" /></a>
+                        }
+                        else
+                        {
+                            <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                        }
+                        <small class="text-muted d-block text-center mt-1">Front</small>
+                    </div>
+                    <div class="id-photo">
+                        @if (!string.IsNullOrEmpty(s.IdPictureBackPath))
+                        {
+                            <a href="@s.IdPictureBackPath" target="_blank"><img src="@s.IdPictureBackPath" alt="Student ID back" /></a>
+                        }
+                        else
+                        {
+                            <div class="id-photo-empty"><i class="bi bi-image"></i></div>
+                        }
+                        <small class="text-muted d-block text-center mt-1">Back</small>
+                    </div>
+                </div>
+
+                @if (!s.EmailVerified)
+                {
+                    <div class="alert alert-warning alert-x mb-3" role="alert">
+                        <i class="bi bi-envelope-exclamation-fill"></i>
+                        <div>This student has not verified their email yet. You can still check the ID photos.</div>
+                    </div>
+                }
+
+                @if (s.IdVerified)
+                {
+                    <p class="mb-2">
+                        <span class="badge-soft badge-soft-success">
+                            <i class="bi bi-patch-check-fill"></i>Verified @(s.IdVerifiedAt.HasValue ? "on " + s.IdVerifiedAt.Value.ToString("MMM d, yyyy") : "")
+                        </span>
+                    </p>
+                }
+                else
+                {
+                    <p class="mb-2"><span class="badge-soft badge-soft-warning"><i class="bi bi-hourglass-split"></i>Awaiting verification</span></p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(s.VerificationRemarks))
+                {
+                    <div class="text-muted small mb-2"><i class="bi bi-chat-left-text me-1"></i>@s.VerificationRemarks</div>
+                }
+
+                @if (Model.CanVerify)
+                {
+                    <form asp-action="VerifyAccount" method="post" class="d-flex flex-column gap-2" data-once>
+                        <input type="hidden" name="id" value="@s.Id" />
+                        <input name="remarks" class="form-control form-control-sm" placeholder="Remarks for the student (optional)" value="@s.VerificationRemarks" />
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="approved" value="true" class="btn btn-sm btn-success flex-fill"><i class="bi bi-check2 me-1"></i>Approve account</button>
+                            <button type="submit" name="approved" value="false" class="btn btn-sm btn-outline-danger flex-fill"><i class="bi bi-x-lg me-1"></i>Reject</button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

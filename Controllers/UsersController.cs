@@ -18,9 +18,11 @@ public class UsersController : AppController
         _rt = rt;
     }
 
+    /// <summary>Staff accounts only. Student accounts live on the Applicant records page.</summary>
     public async Task<IActionResult> Index(string? search, string? role)
     {
         var query = Db.Users
+            .Where(u => u.Role != Roles.Student)
             .Include(u => u.SportAssignments).ThenInclude(x => x.Sport)
             .AsNoTracking()
             .AsQueryable();
@@ -47,8 +49,8 @@ public class UsersController : AppController
     {
         var username = (model.Username ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (!Roles.All.Contains(model.Role))
-            ModelState.AddModelError(nameof(model.Role), "Choose a valid role.");
+        if (!Roles.StaffRoles.Contains(model.Role))
+            ModelState.AddModelError(nameof(model.Role), "Choose a valid staff role. Students create their own accounts.");
 
         if (string.IsNullOrEmpty(model.Password))
             ModelState.AddModelError(nameof(model.Password), "Enter a password for the new account.");
@@ -70,7 +72,11 @@ public class UsersController : AppController
             Email = string.IsNullOrWhiteSpace(model.Email) ? null : model.Email.Trim(),
             Role = model.Role,
             IsActive = model.IsActive,
-            PasswordHash = PasswordService.Hash(model.Password!)
+            PasswordHash = PasswordService.Hash(model.Password!),
+            // An administrator creating the account in person stands in for both
+            // verification steps, so these accounts are never held at the gate.
+            EmailVerified = true,
+            IdVerified = true
         });
         await Db.SaveChangesAsync();
 
@@ -110,8 +116,8 @@ public class UsersController : AppController
         model.Username = user.Username;
         ModelState.Remove(nameof(model.Username));
 
-        if (!Roles.All.Contains(model.Role))
-            ModelState.AddModelError(nameof(model.Role), "Choose a valid role.");
+        if (!Roles.StaffRoles.Contains(model.Role))
+            ModelState.AddModelError(nameof(model.Role), "Choose a valid staff role. Students create their own accounts.");
 
         bool isSelf = user.Id == CurrentUserId;
         if (isSelf)

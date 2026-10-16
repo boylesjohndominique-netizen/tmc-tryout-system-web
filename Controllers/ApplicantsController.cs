@@ -21,61 +21,140 @@ public class ApplicantsController : AppController
         _rt = rt;
     }
 
-    // ---------- Applicant records: search and filter ----------
-    public async Task<IActionResult> Index(string? search, int? sportId, int? scheduleId, string? result, string? status, string? verification)
+    // ---------- Applicant records: the student accounts ----------
+    /// <summary>
+    /// One row per student account, so the athletics office can verify a student the moment they
+    /// sign up — before the student is allowed to submit a tryout entry. Staff accounts are not
+    /// listed here; they live on the Users page.
+    /// </summary>
+    public async Task<IActionResult> Index(string? search, string? verification, string? course)
     {
-        var allowed = await AllowedSportIdsAsync();
-
-        var baseQuery = Db.Applicants.ScopeTo(allowed);
-        int total = await baseQuery.CountAsync();
-
-        var query = baseQuery
-            .Include(a => a.Sport)
-            .Include(a => a.Schedule)
-            .Include(a => a.Evaluations)
-            .AsNoTracking();
+        var students = Db.Users.AsNoTracking().Where(u => u.Role == Roles.Student);
+        int total = await students.CountAsync();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLower();
-            query = query.Where(a => a.StudentId.ToLower().Contains(term)
-                                     || a.FirstName.ToLower().Contains(term)
-                                     || a.LastName.ToLower().Contains(term)
-                                     || (a.MiddleName != null && a.MiddleName.ToLower().Contains(term))
-                                     || (a.FirstName + " " + a.LastName).ToLower().Contains(term)
-                                     || (a.LastName + ", " + a.FirstName).ToLower().Contains(term));
+            students = students.Where(u => u.FullName.ToLower().Contains(term)
+                                           || (u.StudentId != null && u.StudentId.ToLower().Contains(term))
+                                           || (u.Email != null && u.Email.ToLower().Contains(term)));
         }
-        if (sportId.HasValue) query = query.Where(a => a.SportId == sportId.Value);
-        if (scheduleId.HasValue) query = query.Where(a => a.TryoutScheduleId == scheduleId.Value);
-        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<SelectionStatus>(status, out var parsed))
-            query = query.Where(a => a.Status == parsed);
-        if (verification == "pending") query = query.Where(a => !a.IdVerified);
-        if (verification == "verified") query = query.Where(a => a.IdVerified);
+        if (!string.IsNullOrWhiteSpace(course))
+            students = students.Where(u => u.CourseOrGrade == course);
 
-        var list = await query.OrderBy(a => a.LastName).ThenBy(a => a.FirstName).ToListAsync();
-
-        list = result switch
+        students = verification switch
         {
-            "evaluated" => list.Where(a => a.EvaluationCount > 0).ToList(),
-            "notevaluated" => list.Where(a => a.EvaluationCount == 0).ToList(),
-            "qualified" => list.Where(a => a.IsQualified).ToList(),
-            "notqualified" => list.Where(a => a.OverallScore.HasValue && !a.IsQualified).ToList(),
-            _ => list
+            "verified" => students.Where(u => u.IdVerified),
+            "pending" => students.Where(u => u.EmailVerified && !u.IdVerified),
+            "email" => students.Where(u => !u.EmailVerified),
+            _ => students
         };
 
-        return View(new ApplicantListViewModel
+        var list = await students.OrderBy(u => u.FullName).ToListAsync();
+
+        var tryoutCounts = await Db.Applicants
+            .Where(a => a.UserId != null)
+            .GroupBy(a => a.UserId!.Value)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
+        return View(new StudentRecordListViewModel
         {
-            Applicants = list,
-            Sports = await Db.Sports.ScopeTo(allowed).AsNoTracking().OrderBy(s => s.Name).ToListAsync(),
-            Schedules = await Db.Schedules.ScopeTo(allowed).AsNoTracking().OrderByDescending(t => t.StartAt).ToListAsync(),
+            Rows = list.Select(u => new StudentRecordRow
+            {
+                Student = u,
+                TryoutCount = tryoutCounts.TryGetValue(u.Id, out var c) ? c : 0
+            }).ToList(),
             Search = search,
-            SportId = sportId,
-            ScheduleId = scheduleId,
-            Result = result,
-            Status = status,
             Verification = verification,
-            TotalBeforeFilter = total
+            Course = course,
+            Courses = await Db.Users.AsNoTracking()
+                .Where(u => u.Role == Roles.Student && u.CourseOrGrade != null && u.CourseOrGrade != "")
+                .Select(u => u.CourseOrGrade!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync(),
+            TotalBeforeFilter = total,
+            AwaitingApproval = await Db.Users.CountAsync(u => u.Role == Roles.Student && u.EmailVerified && !u.IdVerified),
+            VerifiedCount = await Db.Users.CountAsync(u => u.Role == Roles.Student && u.IdVerified)
         });
+    }
+
+    /// <summary>A single student account: identity, ID photos for approval and their tryout entries.</summary>
+    public async Task<IActionResult> StudentAccount(int id)
+    {
+        var student = await Db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id && u.Role == Roles.Student);
+        if (student == null) return NotFound();
+
+        var registrations = await Db.Applicants
+            .Include(a => a.Sport)
+            .Include(a => a.Schedule)
+            .Include(a => a.Evaluations)
+            .AsNoTracking()
+            .Where(a => a.UserId == id)
+            .OrderBy(a => a.Sport!.Name)
+            .ToListAsync();
+
+        return View(new StudentAccountViewModel
+        {
+            Student = student,
+            Registrations = registrations,
+            CanVerify = !student.IdVerified
+        });
+    }
+
+    /// <summary>Staff confirm or reject the student ID photos uploaded at sign-up.</summary>
+    [HttpPost]
+    public async Task<IActionResult> VerifyAccount(int id, bool approved, string? remarks)
+    {
+        var student = await Db.Users.FirstOrDefaultAsync(u => u.Id == id && u.Role == Roles.Student);
+        if (student == null) return NotFound();
+
+        student.IdVerified = approved;
+        student.VerifiedById = CurrentUserId;
+        student.IdVerifiedAt = DateTime.Now;
+        student.VerificationRemarks = string.IsNullOrWhiteSpace(remarks)
+            ? (approved ? null : "The ID photos were not accepted. Please upload clearer photos of the front and back of your student ID.")
+            : remarks.Trim();
+
+        await Db.SaveChangesAsync();
+
+        await _rt.NotifyUserAsync(student.Id,
+            approved ? "Account verified" : "Student ID needs new photos",
+            approved
+                ? "Your student ID was approved. You can now register for tryouts."
+                : "Your student ID photos were not accepted. Upload new photos from the Account verification page.",
+            approved ? "patch-check-fill" : "exclamation-triangle-fill",
+            new[] { RealtimeScopes.Users, RealtimeScopes.Applicants });
+
+        await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Applicants, RealtimeScopes.Dashboard);
+
+        if (approved) Success($"The account of {student.DisplayName} was verified.");
+        else Failure($"The student ID of {student.DisplayName} was marked as not verified.");
+
+        return RedirectToAction(nameof(StudentAccount), new { id });
+    }
+
+    /// <summary>
+    /// Deactivate or reactivate a student account. Student accounts are no longer on the Users
+    /// page, so this is where an administrator blocks (or restores) a student's access.
+    /// </summary>
+    [Authorize(Roles = Roles.Admin)]
+    [HttpPost]
+    public async Task<IActionResult> ToggleStudentActive(int id)
+    {
+        var student = await Db.Users.FirstOrDefaultAsync(u => u.Id == id && u.Role == Roles.Student);
+        if (student == null) return NotFound();
+
+        student.IsActive = !student.IsActive;
+        await Db.SaveChangesAsync();
+        await _rt.ChangedAsync(RealtimeScopes.Users, RealtimeScopes.Dashboard);
+
+        Success(student.IsActive
+            ? $"{student.DisplayName} can sign in again."
+            : $"{student.DisplayName} was deactivated.");
+        return RedirectToAction(nameof(StudentAccount), new { id });
     }
 
     // ---------- Details ----------
