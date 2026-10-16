@@ -21,6 +21,7 @@ public class ExploreController : AppController
     public async Task<IActionResult> Index()
     {
         var sports = await Db.Sports
+            .Include(s => s.Category)
             .Include(s => s.Staff).ThenInclude(x => x.User)
             .AsNoTracking()
             .Where(s => s.IsActive)
@@ -69,6 +70,7 @@ public class ExploreController : AppController
     public async Task<IActionResult> Details(int id)
     {
         var sport = await Db.Sports
+            .Include(s => s.Category)
             .Include(s => s.Staff).ThenInclude(x => x.User)
             .Include(s => s.Schedules)
             .AsNoTracking()
@@ -76,7 +78,7 @@ public class ExploreController : AppController
         if (sport == null) return NotFound();
 
         var applicants = await Db.Applicants
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores)
             .Include(a => a.Schedule)
             .AsNoTracking()
             .Where(a => a.SportId == id)

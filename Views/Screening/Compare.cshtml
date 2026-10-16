@@ -9,11 +9,11 @@
 </div>
 
 @{
-    string[] labels = { "Skill", "Speed", "Agility", "Endurance", "Teamwork", "Discipline", "Overall performance", "Overall score" };
-    Func<ScreeningRow, int, double> pick = (r, i) => i switch
-    {
-        0 => r.Skill, 1 => r.Speed, 2 => r.Agility, 3 => r.Endurance, 4 => r.Teamwork, 5 => r.Discipline, 6 => r.OverallPerformance, _ => r.Overall
-    };
+    var criteriaNames = Model.Rows
+        .SelectMany(r => r.Criteria)
+        .Select(c => c.Name)
+        .Distinct()
+        .ToList();
 }
 <div class="card-x">
     <div class="table-responsive-x">
@@ -34,19 +34,27 @@
                 </tr>
             </thead>
             <tbody>
-                @for (int i = 0; i < labels.Length; i++)
+                @foreach (var name in criteriaNames)
                 {
-                    var values = Model.Rows.Select(r => pick(r, i)).ToList();
-                    var best = values.Max();
+                    var values = Model.Rows.Select(r => r.Criteria.FirstOrDefault(c => c.Name == name)?.Value).ToList();
+                    var present = values.Where(v => v.HasValue).Select(v => v!.Value).ToList();
+                    double? best = present.Count > 0 ? present.Max() : null;
                     <tr>
-                        <td class="fw-semibold">@labels[i]</td>
-                        @foreach (var r in Model.Rows)
+                        <td class="fw-semibold">@name</td>
+                        @foreach (var v in values)
                         {
-                            var v = pick(r, i);
-                            <td class="@(v == best ? "compare-best" : "")">@v.ToString("0.0")</td>
+                            <td class="@(v.HasValue && best.HasValue && v.Value == best.Value ? "compare-best" : "")">@(v.HasValue ? v.Value.ToString("0.0") : "—")</td>
                         }
                     </tr>
                 }
+                <tr>
+                    <td class="fw-semibold">Overall score</td>
+                    @{ var overalls = Model.Rows.Select(r => r.Overall).ToList(); var bestOverall = overalls.Max(); }
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td class="@(r.Overall == bestOverall ? "compare-best" : "")">@r.Overall.ToString("0.0")</td>
+                    }
+                </tr>
                 <tr>
                     <td class="fw-semibold">Rank in sport</td>
                     @foreach (var r in Model.Rows) { <td>#@r.Rank</td> }

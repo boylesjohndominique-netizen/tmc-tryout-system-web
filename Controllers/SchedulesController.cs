@@ -83,7 +83,7 @@ public class SchedulesController : AppController
     {
         var schedule = await Db.Schedules
             .Include(t => t.Sport)
-            .Include(t => t.Applicants).ThenInclude(a => a.Evaluations)
+            .Include(t => t.Applicants).ThenInclude(a => a.Evaluations).ThenInclude(e => e.Scores)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
         if (schedule == null) return NotFound();

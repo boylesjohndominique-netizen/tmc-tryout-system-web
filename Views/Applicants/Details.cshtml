@@ -69,18 +69,25 @@
             {
                 <div class="table-responsive-x">
                     <table class="table table-x">
-                        <thead><tr><th>Evaluator</th><th>Skill</th><th>Speed</th><th>Agility</th><th>Endurance</th><th>Teamwork</th><th>Discipline</th><th>Overall perf.</th><th>Avg.</th></tr></thead>
+                        <thead><tr><th>Evaluator</th><th>Criteria</th><th>Avg.</th></tr></thead>
                         <tbody>
                         @foreach (var e in Model.Evaluations)
                         {
                             <tr>
                                 <td>@e.Evaluator?.FullName<span class="cell-sub">@e.EvaluatedAt.ToString("MMM d, yyyy")</span></td>
-                                <td>@e.Skill</td><td>@e.Speed</td><td>@e.Agility</td><td>@e.Endurance</td><td>@e.Teamwork</td><td>@e.Discipline</td><td>@e.OverallPerformance</td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var s in e.Scores.OrderBy(x => x.Criterion?.DisplayOrder))
+                                        {
+                                            <span class="staff-chip"><i class="bi bi-@(s.Criterion?.Icon ?? "star")"></i>@s.Criterion?.Name: @s.Value</span>
+                                        }
+                                    </div>
+                                </td>
                                 <td><span class="score-pill @UiHelpers.ScoreClass(e.Average, a.Sport?.QualifyingScore ?? 0)">@e.Average.ToString("0.0")</span></td>
                             </tr>
                             @if (!string.IsNullOrWhiteSpace(e.Comments))
                             {
-                                <tr><td colspan="9" class="text-muted small pt-0"><i class="bi bi-chat-left-text me-1"></i>@e.Comments</td></tr>
+                                <tr><td colspan="3" class="text-muted small pt-0"><i class="bi bi-chat-left-text me-1"></i>@e.Comments</td></tr>
                             }
                         }
                         </tbody>

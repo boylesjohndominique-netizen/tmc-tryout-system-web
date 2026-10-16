@@ -41,9 +41,9 @@ public class ReportsController : AppController
 
         var query = Db.Applicants
             .ScopeTo(allowed)
-            .Include(a => a.Sport)
+            .Include(a => a.Sport).ThenInclude(s => s!.Category)
             .Include(a => a.Schedule)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .AsNoTracking();
         if (sportId.HasValue) query = query.Where(a => a.SportId == sportId.Value);
         var applicants = await query.OrderBy(a => a.LastName).ThenBy(a => a.FirstName).ToListAsync();
@@ -116,13 +116,15 @@ public class ReportsController : AppController
                 }
 
             case "evaluations":
-                report.Columns = new() { "Student ID", "Name", "Sport", "Skill", "Speed", "Agility", "Endurance", "Teamwork", "Discipline", "Overall performance", "Overall score", "Evaluators" };
+                report.Columns = new() { "Student ID", "Name", "Sport", "Category", "Overall score", "Criteria", "Evaluators" };
                 report.Rows = ScreeningService.Build(applicants)
                     .Select(r => new[]
                     {
                         r.Applicant.StudentId, r.Applicant.FullName, r.Applicant.Sport?.Name ?? "",
-                        Fmt(r.Skill), Fmt(r.Speed), Fmt(r.Agility), Fmt(r.Endurance), Fmt(r.Teamwork), Fmt(r.Discipline),
-                        Fmt(r.OverallPerformance), Fmt(r.Overall), r.EvaluatorCount.ToString()
+                        r.Applicant.Sport?.Category?.Name ?? "-",
+                        Fmt(r.Overall),
+                        string.Join("; ", r.Criteria.Select(c => $"{c.Name}: {c.Value:0.#}")),
+                        r.EvaluatorCount.ToString()
                     }).ToList();
                 break;
 

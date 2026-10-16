@@ -470,13 +470,19 @@ public class AccountController : AppController
             if (schedule == null) return;
 
             var applicants = Db.Applicants.AsNoTracking()
-                .Include(a => a.Evaluations)
+                .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
                 .Where(a => a.TryoutScheduleId == schedule.Id)
                 .ToList();
             var evaluations = applicants.SelectMany(a => a.Evaluations).ToList();
             if (evaluations.Count == 0) return;
 
-            double Avg(Func<Evaluation, int> pick) => evaluations.Average(e => pick(e));
+            var criteria = evaluations
+                .SelectMany(e => e.Scores)
+                .GroupBy(s => s.Criterion?.Name ?? "Criterion")
+                .Select(g => (Label: g.Key, Avg: Math.Round(g.Average(s => (double)s.Value))))
+                .OrderBy(c => c.Label)
+                .Take(6)
+                .ToList();
 
             ViewData["HeroStats"] = new AuthHeroStatsViewModel
             {
@@ -491,15 +497,7 @@ public class AccountController : AppController
                 Slots = schedule.Sport?.Slots ?? 0,
                 QualifyingScore = schedule.Sport?.QualifyingScore ?? 75,
                 TopScore = Math.Round(evaluations.Max(e => e.Average), 1),
-                Criteria =
-                [
-                    ("Skill", Math.Round(Avg(e => e.Skill))),
-                    ("Speed", Math.Round(Avg(e => e.Speed))),
-                    ("Agility", Math.Round(Avg(e => e.Agility))),
-                    ("Endurance", Math.Round(Avg(e => e.Endurance))),
-                    ("Teamwork", Math.Round(Avg(e => e.Teamwork))),
-                    ("Discipline", Math.Round(Avg(e => e.Discipline)))
-                ]
+                Criteria = criteria
             };
         }
         catch

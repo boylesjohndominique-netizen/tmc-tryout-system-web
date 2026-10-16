@@ -27,7 +27,7 @@ public class SelectionController : AppController
         var query = Db.Applicants
             .ScopeTo(allowed)
             .Include(a => a.Sport)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .AsNoTracking();
         if (sportId.HasValue) query = query.Where(a => a.SportId == sportId.Value);
 
@@ -82,7 +82,7 @@ public class SelectionController : AppController
     {
         var applicant = await Db.Applicants
             .Include(a => a.Sport)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .FirstOrDefaultAsync(a => a.Id == id);
         if (applicant == null) return NotFound();
 
@@ -139,7 +139,7 @@ public class SelectionController : AppController
 
         var applicants = await Db.Applicants
             .Include(a => a.Sport)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .Where(a => a.SportId == sportId)
             .ToListAsync();
 

@@ -20,8 +20,8 @@ public class ScreeningController : AppController
 
         var query = Db.Applicants
             .ScopeTo(allowed)
-            .Include(a => a.Sport)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Sport).ThenInclude(s => s!.Category)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .AsNoTracking();
 
         if (sportId.HasValue) query = query.Where(a => a.SportId == sportId.Value);
@@ -82,7 +82,7 @@ public class ScreeningController : AppController
         var sportIds = chosen.Select(a => a.SportId).Distinct().ToList();
         var pool = await Db.Applicants
             .Include(a => a.Sport)
-            .Include(a => a.Evaluations)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .AsNoTracking()
             .Where(a => sportIds.Contains(a.SportId))
             .ToListAsync();

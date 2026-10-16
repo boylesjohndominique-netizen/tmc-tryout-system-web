@@ -164,6 +164,7 @@ public class ApplicantsController : AppController
             .Include(a => a.Sport)
             .Include(a => a.Schedule)
             .Include(a => a.Evaluations).ThenInclude(e => e.Evaluator)
+            .Include(a => a.Evaluations).ThenInclude(e => e.Scores).ThenInclude(s => s.Criterion)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
         if (applicant == null) return NotFound();
