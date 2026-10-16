@@ -12,22 +12,29 @@ public class Evaluation
     public int EvaluatorId { get; set; }
     public AppUser? Evaluator { get; set; }
 
-    [Range(0, 100)] public int Skill { get; set; }
-    [Range(0, 100)] public int Speed { get; set; }
-    [Range(0, 100)] public int Agility { get; set; }
-    [Range(0, 100)] public int Endurance { get; set; }
-    [Range(0, 100)] public int Teamwork { get; set; }
-    [Range(0, 100)] public int Discipline { get; set; }
-
-    [Display(Name = "Overall performance")]
-    [Range(0, 100)] public int OverallPerformance { get; set; }
-
     [StringLength(600)]
     public string? Comments { get; set; }
 
     public DateTime EvaluatedAt { get; set; } = DateTime.Now;
 
-    /// <summary>The evaluator's overall score: the mean of all seven criteria.</summary>
+    /// <summary>One row per criterion of the applicant's sport category. The evaluator's score is the mean.</summary>
+    public ICollection<EvaluationScore> Scores { get; set; } = new List<EvaluationScore>();
+
     public double Average =>
-        Math.Round((Skill + Speed + Agility + Endurance + Teamwork + Discipline + OverallPerformance) / 7.0, 2);
+        Scores.Count == 0 ? 0 : Math.Round(Scores.Average(s => (double)s.Value), 2);
+}
+
+/// <summary>A score an evaluator gave for one criterion on one evaluation.</summary>
+public class EvaluationScore
+{
+    public int Id { get; set; }
+
+    public int EvaluationId { get; set; }
+    public Evaluation? Evaluation { get; set; }
+
+    public int EvaluationCriterionId { get; set; }
+    public EvaluationCriterion? Criterion { get; set; }
+
+    [Range(0, 100)]
+    public int Value { get; set; }
 }

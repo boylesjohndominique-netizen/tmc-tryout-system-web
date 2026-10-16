@@ -8,11 +8,14 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<SportCategory> SportCategories => Set<SportCategory>();
+    public DbSet<EvaluationCriterion> EvaluationCriteria => Set<EvaluationCriterion>();
     public DbSet<Sport> Sports => Set<Sport>();
     public DbSet<SportAssignment> SportAssignments => Set<SportAssignment>();
     public DbSet<TryoutSchedule> Schedules => Set<TryoutSchedule>();
     public DbSet<Applicant> Applicants => Set<Applicant>();
     public DbSet<Evaluation> Evaluations => Set<Evaluation>();
+    public DbSet<EvaluationScore> EvaluationScores => Set<EvaluationScore>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -22,6 +25,15 @@ public class AppDbContext : DbContext
         b.Entity<AppUser>().HasIndex(u => u.StudentId).IsUnique();
 
         b.Entity<Sport>().HasIndex(s => s.Name).IsUnique();
+
+        b.Entity<SportCategory>().HasIndex(c => c.Name).IsUnique();
+        b.Entity<EvaluationCriterion>()
+            .HasOne(c => c.Category).WithMany(cat => cat.Criteria)
+            .HasForeignKey(c => c.SportCategoryId).OnDelete(DeleteBehavior.Cascade);
+        // A sport without a category keeps working; deleting a category leaves its sports uncategorised.
+        b.Entity<Sport>()
+            .HasOne(s => s.Category).WithMany(c => c.Sports)
+            .HasForeignKey(s => s.SportCategoryId).OnDelete(DeleteBehavior.SetNull);
 
         b.Entity<SportAssignment>().HasKey(x => new { x.SportId, x.UserId });
         b.Entity<SportAssignment>()
@@ -55,5 +67,13 @@ public class AppDbContext : DbContext
         b.Entity<Evaluation>()
             .HasOne(e => e.Evaluator).WithMany()
             .HasForeignKey(e => e.EvaluatorId).OnDelete(DeleteBehavior.Restrict);
+
+        b.Entity<EvaluationScore>().HasIndex(s => new { s.EvaluationId, s.EvaluationCriterionId }).IsUnique();
+        b.Entity<EvaluationScore>()
+            .HasOne(s => s.Evaluation).WithMany(e => e.Scores)
+            .HasForeignKey(s => s.EvaluationId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<EvaluationScore>()
+            .HasOne(s => s.Criterion).WithMany()
+            .HasForeignKey(s => s.EvaluationCriterionId).OnDelete(DeleteBehavior.Restrict);
     }
 }

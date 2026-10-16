@@ -10,6 +10,23 @@ public static class UiHelpers
         "bullseye", "bicycle", "activity", "award", "flag", "star"
     };
 
+    /// <summary>Icons the administrator can pick for a sport category.</summary>
+    public static readonly string[] CategoryIcons =
+    {
+        "collection", "activity", "people", "lightning-charge", "trophy", "cpu",
+        "controller", "diagram-3", "globe", "star", "award", "flag"
+    };
+
+    /// <summary>Icons the administrator can pick for an evaluation criterion.</summary>
+    public static readonly string[] CriterionIcons =
+    {
+        "star", "bullseye", "lightning-charge", "arrow-repeat", "activity", "people",
+        "shield-check", "clock", "diagram-3", "lightbulb", "map", "chat-dots", "eye",
+        "heart-pulse", "gem", "puzzle", "book", "calculator", "translate", "trophy",
+        "stopwatch", "speedometer2", "wind", "fire", "crosshair", "hand-index",
+        "graph-up", "clipboard-check", "joystick"
+    };
+
     /// <summary>The year levels Trinidad Municipal College offers: college only, 1st to 4th year.</summary>
     public static readonly string[] YearLevels =
     {

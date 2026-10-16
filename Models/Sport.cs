@@ -23,6 +23,10 @@ public class Sport
     [Range(1, 500, ErrorMessage = "Roster slots must be between 1 and 500.")]
     public int? Slots { get; set; }
 
+    /// <summary>The category that decides which criteria this sport is evaluated on.</summary>
+    public int? SportCategoryId { get; set; }
+    public SportCategory? Category { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public ICollection<SportAssignment> Staff { get; set; } = new List<SportAssignment>();

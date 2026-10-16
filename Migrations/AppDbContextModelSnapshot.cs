@@ -284,9 +284,6 @@ namespace TmcTryoutSystem.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Agility")
-                        .HasColumnType("int");
-
                     b.Property<int>("ApplicantId")
                         .HasColumnType("int");
 
@@ -294,28 +291,10 @@ namespace TmcTryoutSystem.Migrations
                         .HasMaxLength(600)
                         .HasColumnType("varchar(600)");
 
-                    b.Property<int>("Discipline")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Endurance")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("EvaluatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("EvaluatorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("OverallPerformance")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Skill")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Speed")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Teamwork")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -326,6 +305,64 @@ namespace TmcTryoutSystem.Migrations
                         .IsUnique();
 
                     b.ToTable("Evaluations");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.EvaluationCriterion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<int>("SportCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SportCategoryId");
+
+                    b.ToTable("EvaluationCriteria");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.EvaluationScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EvaluationCriterionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EvaluationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvaluationCriterionId");
+
+                    b.HasIndex("EvaluationId", "EvaluationCriterionId")
+                        .IsUnique();
+
+                    b.ToTable("EvaluationScores");
                 });
 
             modelBuilder.Entity("TmcTryoutSystem.Models.Sport", b =>
@@ -359,10 +396,15 @@ namespace TmcTryoutSystem.Migrations
                     b.Property<int?>("Slots")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SportCategoryId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("SportCategoryId");
 
                     b.ToTable("Sports");
                 });
@@ -380,6 +422,39 @@ namespace TmcTryoutSystem.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("SportAssignments");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.SportCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("SportCategories");
                 });
 
             modelBuilder.Entity("TmcTryoutSystem.Models.TryoutSchedule", b =>
@@ -477,6 +552,46 @@ namespace TmcTryoutSystem.Migrations
                     b.Navigation("Evaluator");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.EvaluationCriterion", b =>
+                {
+                    b.HasOne("TmcTryoutSystem.Models.SportCategory", "Category")
+                        .WithMany("Criteria")
+                        .HasForeignKey("SportCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.EvaluationScore", b =>
+                {
+                    b.HasOne("TmcTryoutSystem.Models.EvaluationCriterion", "Criterion")
+                        .WithMany()
+                        .HasForeignKey("EvaluationCriterionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TmcTryoutSystem.Models.Evaluation", "Evaluation")
+                        .WithMany("Scores")
+                        .HasForeignKey("EvaluationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Criterion");
+
+                    b.Navigation("Evaluation");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.Sport", b =>
+                {
+                    b.HasOne("TmcTryoutSystem.Models.SportCategory", "Category")
+                        .WithMany("Sports")
+                        .HasForeignKey("SportCategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.SportAssignment", b =>
                 {
                     b.HasOne("TmcTryoutSystem.Models.Sport", "Sport")
@@ -519,6 +634,11 @@ namespace TmcTryoutSystem.Migrations
                     b.Navigation("Evaluations");
                 });
 
+            modelBuilder.Entity("TmcTryoutSystem.Models.Evaluation", b =>
+                {
+                    b.Navigation("Scores");
+                });
+
             modelBuilder.Entity("TmcTryoutSystem.Models.Sport", b =>
                 {
                     b.Navigation("Applicants");
@@ -526,6 +646,13 @@ namespace TmcTryoutSystem.Migrations
                     b.Navigation("Schedules");
 
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("TmcTryoutSystem.Models.SportCategory", b =>
+                {
+                    b.Navigation("Criteria");
+
+                    b.Navigation("Sports");
                 });
 
             modelBuilder.Entity("TmcTryoutSystem.Models.TryoutSchedule", b =>
