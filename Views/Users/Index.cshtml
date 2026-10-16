@@ -50,7 +50,16 @@
                     <tr>
                         <td>
                             <div class="person">
-                                <span class="avatar avatar-sm">@initials</span>
+                                <span class="avatar avatar-sm">
+                                    @if (!string.IsNullOrWhiteSpace(u.ProfilePicturePath))
+                                    {
+                                        <img src="@u.ProfilePicturePath" alt="" />
+                                    }
+                                    else
+                                    {
+                                        @initials
+                                    }
+                                </span>
                                 <span><strong>@u.FullName</strong><small>@u.Username@(string.IsNullOrEmpty(u.Email) ? "" : " · " + u.Email)</small></span>
                             </div>
                         </td>

@@ -17,6 +17,7 @@ public class AccountController : AppController
     private readonly IRealtimeNotifier _rt;
     private readonly VerificationCodeService _codes;
     private readonly AccountIdPictureService _pictures;
+    private readonly ProfilePictureService _profilePictures;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<AccountController> _logger;
 
@@ -25,12 +26,14 @@ public class AccountController : AppController
         IRealtimeNotifier rt,
         VerificationCodeService codes,
         AccountIdPictureService pictures,
+        ProfilePictureService profilePictures,
         IWebHostEnvironment env,
         ILogger<AccountController> logger) : base(db)
     {
         _rt = rt;
         _codes = codes;
         _pictures = pictures;
+        _profilePictures = profilePictures;
         _env = env;
         _logger = logger;
     }
@@ -342,6 +345,7 @@ public class AccountController : AppController
         model.EmailVerified = user.EmailVerified;
         model.IdVerified = user.IdVerified;
         model.VerificationRemarks = user.VerificationRemarks;
+        model.ProfilePicturePath = user.ProfilePicturePath;
 
         // A student's email is the verified sign-in key, so it is changed only through support.
         if (model.IsStudent) model.Email = user.Email;
@@ -355,7 +359,39 @@ public class AccountController : AppController
                 ModelState.AddModelError(nameof(model.YearLevel), "Select your year level.");
         }
 
+        // A new upload and the "remove" tick cannot both apply; a fresh upload wins.
+        bool hasNewPicture = model.ProfilePicture is { Length: > 0 };
+        if (hasNewPicture)
+        {
+            model.RemoveProfilePicture = false;
+            _profilePictures.Validate(model.ProfilePicture, nameof(model.ProfilePicture), ModelState);
+        }
+
         if (!ModelState.IsValid) return View(model);
+
+        if (hasNewPicture)
+        {
+            string newPath;
+            try
+            {
+                newPath = await _profilePictures.SaveAsync(model.ProfilePicture!, user.Id);
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError(string.Empty, "We could not save your profile picture. Please try again.");
+                return View(model);
+            }
+
+            _profilePictures.Delete(user.ProfilePicturePath);
+            user.ProfilePicturePath = newPath;
+            model.ProfilePicturePath = newPath;
+        }
+        else if (model.RemoveProfilePicture)
+        {
+            _profilePictures.Delete(user.ProfilePicturePath);
+            user.ProfilePicturePath = null;
+            model.ProfilePicturePath = null;
+        }
 
         user.FullName = model.FullName.Trim();
         if (model.IsStudent)
@@ -369,7 +405,7 @@ public class AccountController : AppController
         await Db.SaveChangesAsync();
         await _rt.ChangedAsync(RealtimeScopes.Users);
 
-        // Refresh the cookie so the new name shows immediately.
+        // Refresh the cookie so the new name and picture show immediately.
         var current = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         await SignInAsync(user, current.Properties?.IsPersistent ?? false);
 
@@ -408,6 +444,7 @@ public class AccountController : AppController
         Username = user.Username,
         Role = user.Role,
         FullName = user.FullName,
+        ProfilePicturePath = user.ProfilePicturePath,
         Email = user.Email,
         IsStudent = user.Role == Roles.Student,
         StudentId = user.StudentId,
@@ -515,7 +552,8 @@ public class AccountController : AppController
             new("FullName", user.FullName),
             new(ClaimTypes.Role, user.Role),
             new(VerificationClaims.EmailVerified, user.EmailVerified.ToString()),
-            new(VerificationClaims.IdVerified, user.IdVerified.ToString())
+            new(VerificationClaims.IdVerified, user.IdVerified.ToString()),
+            new(ProfileClaims.Picture, user.ProfilePicturePath ?? string.Empty)
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var properties = new AuthenticationProperties

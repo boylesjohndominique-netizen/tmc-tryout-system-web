@@ -135,6 +135,18 @@ public class ProfileViewModel
     [Display(Name = "Full name")]
     public string FullName { get; set; } = string.Empty;
 
+    // ---------- Profile picture ----------
+    /// <summary>Current picture web path, shown in the preview before and after an upload.</summary>
+    public string? ProfilePicturePath { get; set; }
+
+    [Display(Name = "Profile picture")]
+    public IFormFile? ProfilePicture { get; set; }
+
+    [Display(Name = "Remove my current picture")]
+    public bool RemoveProfilePicture { get; set; }
+
+    public bool HasProfilePicture => !string.IsNullOrWhiteSpace(ProfilePicturePath);
+
     [EmailAddress(ErrorMessage = "Enter a valid email address."), StringLength(120)]
     public string? Email { get; set; }
 

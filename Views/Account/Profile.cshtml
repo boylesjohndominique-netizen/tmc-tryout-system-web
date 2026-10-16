@@ -12,13 +12,35 @@
 
 <div class="row">
     <div class="col-xl-7 col-lg-8">
-        <form asp-action="Profile" method="post" class="card-x" data-once>
+        <form asp-action="Profile" method="post" enctype="multipart/form-data" class="card-x" data-once>
             <div class="form-section">
                 <div class="profile-head mb-4">
-                    <span class="avatar avatar-gold avatar-lg">@(string.Concat(Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0]))))</span>
-                    <div>
+                    <span class="avatar avatar-gold avatar-lg">
+                        @if (Model.HasProfilePicture)
+                        {
+                            <img src="@Model.ProfilePicturePath" alt="@Model.FullName profile picture" />
+                        }
+                        else
+                        {
+                            @(string.Concat(Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0]))))
+                        }
+                    </span>
+                    <div class="flex-grow-1">
                         <h2>@Model.FullName</h2>
                         <span class="badge-soft badge-soft-info"><i class="bi bi-@UiHelpers.RoleIcon(Model.Role)"></i>@Model.Role</span>
+                        <div class="mt-3">
+                            <label asp-for="ProfilePicture" class="form-label"></label>
+                            <input asp-for="ProfilePicture" type="file" accept="image/*" class="form-control" />
+                            <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                            <div class="form-text">JPG, PNG, WEBP or GIF up to 5 MB. Shown next to your name across the system.</div>
+                            @if (Model.HasProfilePicture)
+                            {
+                                <div class="form-check mt-2">
+                                    <input asp-for="RemoveProfilePicture" class="form-check-input" />
+                                    <label asp-for="RemoveProfilePicture" class="form-check-label"></label>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-x"></div>

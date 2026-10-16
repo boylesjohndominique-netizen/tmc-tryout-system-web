@@ -6,6 +6,7 @@
     var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
     var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
     var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    var profilePicture = User.FindFirst(ProfileClaims.Picture)?.Value;
     bool isStudent = role == Roles.Student;
     bool isAdmin = role == Roles.Admin;
     bool canDecide = role == Roles.Admin || role == Roles.Coach;
@@ -77,7 +78,16 @@
 
         <div class="side-user dropup">
             <button class="side-user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="avatar avatar-gold">@initials</span>
+                <span class="avatar avatar-gold">
+                    @if (!string.IsNullOrEmpty(profilePicture))
+                    {
+                        <img src="@profilePicture" alt="" />
+                    }
+                    else
+                    {
+                        @initials
+                    }
+                </span>
                 <span class="side-user-text">
                     <strong>@fullName</strong>
                     <small>@role</small>
