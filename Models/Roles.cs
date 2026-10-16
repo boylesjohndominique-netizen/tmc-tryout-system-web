@@ -28,3 +28,9 @@ public static class VerificationClaims
     public const string EmailVerified = "EmailVerified";
     public const string IdVerified = "IdVerified";
 }
+
+/// <summary>Claim that carries the signed-in user's profile picture path into each request.</summary>
+public static class ProfileClaims
+{
+    public const string Picture = "ProfilePicture";
+}

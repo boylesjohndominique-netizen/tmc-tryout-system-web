@@ -73,6 +73,11 @@ public class AppUser
     [StringLength(300)]
     public string? VerificationRemarks { get; set; }
 
+    // ---------- Profile picture ----------
+    /// <summary>Web path to the user's optional profile photo, shown in the app shell and on the profile page.</summary>
+    [StringLength(260)]
+    public string? ProfilePicturePath { get; set; }
+
     public string PasswordHash { get; set; } = string.Empty;
 
     [Required, StringLength(20)]

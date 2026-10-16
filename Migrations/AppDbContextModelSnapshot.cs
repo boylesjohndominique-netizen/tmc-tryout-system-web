@@ -101,6 +101,10 @@ namespace TmcTryoutSystem.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("ProfilePicturePath")
+                        .HasMaxLength(260)
+                        .HasColumnType("varchar(260)");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
